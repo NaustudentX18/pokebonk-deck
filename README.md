@@ -17,6 +17,11 @@ An unofficial native Linux client for [PokéBonk](https://pokebonk.com) — the 
 Fullscreen on launch. Controller-native. Saves that persist. Game updates that arrive on their
 own. One AppImage, no install, no root.
 
+> **Status: in development.** The design spec and the implementation plan are published, and the
+> build configuration has been executed end-to-end — the plan produces a working 113 MB AppImage
+> with the static, FUSE3-free runtime. The client source is not written yet and no release
+> exists. Nothing on this page is promised; every claim is measured.
+
 </div>
 
 ---
