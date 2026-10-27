@@ -1101,8 +1101,11 @@ git commit -m "build: app icons and AppImage verification script"
 ## Task 8: Landing page media pipeline
 
 **Files:**
-- Create: `tools/capture-final.js`
-- Create: `tools/build-media.sh`
+- Create: `tools/capture-final.js` — the full GPU flow: title → partner select → hub →
+  League → live run → gameplay video, in one pass.
+- Create: `tools/capture-hub.js` — a fast path that grabs only the hub and League screens.
+- Create: `tools/build-media.sh` — resizes the captures, writes PNG + WebP, encodes the
+  MP4/WebM and extracts the poster frame.
 - Modify: `site/index.html`
 
 **Interfaces:**
