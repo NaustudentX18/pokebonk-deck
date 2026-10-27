@@ -522,6 +522,11 @@ module.exports = { createUpdateService }
 Run: `node --test test/update-service.test.js`
 Expected: PASS, 4 tests
 
+> **Note on Steam Input:** on the Deck, Steam Input cannot be disabled for the built-in
+> controller — the `hid-steam` kernel driver unregisters the physical device while the Steam
+> client holds it open and substitutes a virtual Xbox-360 pad. The correct remedy is the
+> **Gamepad** action set plus **Game Mode (gamescope)**, not "turn Steam Input off".
+
 - [ ] **Step 5: Wire it into main.js**
 
 In `src/main.js`, replace the `did-finish-load` block with:
@@ -1371,6 +1376,18 @@ udevadm info -q property -n /dev/input/js0 | grep -E 'ID_INPUT_JOYSTICK|NAME'
 
 Expected: a js node exists for the Steam virtual pad ("Microsoft X-Box 360 pad 0") and/or the
 Deck's own controller, with `ID_INPUT_JOYSTICK=1`.
+
+Also check the container, because a game launched from Steam runs inside the Steam Linux
+Runtime:
+
+```bash
+ls /dev/input/ /run/udev 2>&1 | head
+```
+
+`/dev/input` must list `js*` and `event*` nodes, and `/run/udev` must exist and be readable —
+Chromium `dlopen`s libudev and enumerates through it. Controllers already connected at launch
+are detected; hotplug of a pad connected later may not be, because containers do not share the
+host's netlink uevent socket.
 
 - [ ] **Step 3: Confirm the gamepad appears after a button press**
 

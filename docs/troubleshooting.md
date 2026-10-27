@@ -8,9 +8,16 @@ appears. The shell's `F8` shortcut prints exactly what the client sees.
 
 If a pad still does not appear:
 
-1. **Check the Steam Input layout.** Steam Input has two action sets: Desktop (buttons act
-   as mouse/keyboard) and Gamepad. The game reads the Gamepad API, so use the Gamepad set.
-   Hold **Menu** in-game to toggle, or change it in Steam's per-game controller settings.
+1. **Check the Steam Input action set.** Steam Input has two action sets: Desktop (buttons act
+   as mouse/keyboard — "lizard mode") and Gamepad. The game reads the Gamepad API, so use the
+   Gamepad set. Hold **Menu** in-game to toggle, or change it in Steam's per-game controller
+   settings.
+
+   > You **cannot** disable Steam Input for the Deck's built-in controller, and you are not
+   > meant to: while the Steam client holds the controller open, the `hid-steam` kernel driver
+   > unregisters the physical device and exposes a virtual Xbox-360 pad instead. That virtual
+   > pad is what Chromium sees, and it is what the game wants. Pick the right *action set*,
+   > not a different input stack.
 2. **Run the native Linux build.** A Proton/Windows build is a different code path
    (Electron ≥ 27 lost the Gamepad API on Windows under Steam Input). This project ships
    native Linux only.
@@ -25,7 +32,20 @@ If a pad still does not appear:
    `Steam Deck`, with `ID_INPUT_JOYSTICK=1`. Chromium on Linux reads buttons and axes from
    the **joydev** node (`/dev/input/js*`), not from the raw evdev node.
 
-4. **Still stuck?** The client's `F8` output plus the commands above are enough to diagnose
+4. **Launched from Steam?** A game started from the Steam library runs inside the Steam Linux
+   Runtime container. Chromium enumerates controllers through libudev, so check that the
+   container can see them:
+
+   ```bash
+   ls /dev/input/ /run/udev 2>&1 | head
+   ```
+
+   `/run/udev` must exist and be readable. Controllers already connected at launch are
+   detected; hotplug of a pad connected *later* may not be, because containers do not share
+   the host's uevent socket. On the Deck the controller is always connected first, so this is
+   rarely the issue.
+
+5. **Still stuck?** The client's `F8` output plus the commands above are enough to diagnose
    it. Open an issue with both.
 
 ## "Your browser is not using your graphics card"

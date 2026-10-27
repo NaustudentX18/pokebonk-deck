@@ -378,8 +378,11 @@ GET https://pokebonk.com/version.json
         <summary>My controller doesn't work in the game.</summary>
         <p>Chromium only reports a gamepad after the user has interacted with one, so press a
         button on the Deck's controls once the game is up. If the pad still doesn't appear,
-        check that Steam Input is set to a Gamepad layout rather than Desktop, and that you're
-        running the native Linux build — a Proton/Windows build is a different code path.</p>
+        check that Steam Input is set to its <strong>Gamepad</strong> action set rather than
+        Desktop — Steam Input cannot be switched off for the Deck's built-in controller, and
+        isn't meant to be. Also make sure you're running the native Linux build; a
+        Proton/Windows build is a different code path where Chromium loses the gamepad
+        entirely.</p>
       </details>
       <details>
         <summary>How do updates work?</summary>

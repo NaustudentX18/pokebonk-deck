@@ -63,9 +63,11 @@ Every load-bearing claim below was verified against live sources on 2026-10-27, 
 | Steam Input's virtual pad appears as a real `/dev/input/js0` node | Real Steam Deck system log (SteamOS 3.7.19): `input: Microsoft X-Box 360 pad 0 as /devices/virtual/input/input40` |
 | Chromium on Linux polls **joydev** (`/dev/input/js*`), not evdev, for buttons/axes | `gamepad_platform_data_fetcher_linux.cc` @ Chromium 156 |
 | `js*` nodes are mode `0664` (world-readable) by systemd's `50-udev-default.rules` | systemd source |
-| The Electron 27+ "Steam Input breaks gamepads" issue is **Windows-only** | electron#45732 and #45989 are both labelled `platform/windows`; the underlying Chromium change (M114 `4aa5edf6d967`) is a Windows Xbox-Input fetcher. Linux's joydev path is untouched |
+| The Electron 27+ "Steam Input breaks gamepads" issue is **Windows-only** | electron#45732 and #45989 are both labelled `platform/windows`; the underlying Chromium change (M114 `4aa5edf6d967`) is a Windows Xbox-Input fetcher. Linux's joydev path is untouched. Valve's own fix (Steam client, 9 Sept 2025) was likewise Windows-scoped |
+| **Electron 45 is the first Electron release with Valve's hid-steam mappings** | Chromium M156 added `MapperValve2` for the Steam Deck (PID 1205) and the Steam Controller 2026 (CL 8311577, 2026-09-10). Electron 45 branched from M156 on 2026-09-28 |
 | Chromium hides gamepads until the user presses a button | `gamepad_service.cc` @156: `did_observe_user_gesture` → `RegisterForUserGesture` |
 | Valve is dropping FUSE2 from SteamOS | SteamOS issue #2391 (open) |
+| Launching from Steam runs the app inside the Steam Linux Runtime container | Since Nov 2024 native Linux titles run in SLR 1.0 (scout) by default. `pressure-vessel` shares `/dev` and exposes read-only `/run/udev`, so controllers **already connected at launch are detected** — which is the Deck's normal case — but **hotplug** is unreliable in the container. Verify `ls /dev/input` and `ls /run/udev` inside the container before blaming the code |
 
 ### 2.3 Local proof (measured on this machine, 2026-10-27)
 
@@ -200,7 +202,7 @@ Content is **verified against the live game**, not invented:
 | Risk | Severity | Mitigation |
 |---|---|---|
 | Chromium's Gamepad API needs a user gesture before reporting a pad | Medium | Watcher polls rather than trusting `gamepadconnected`; the shell's first screen is a "press any button" prompt |
-| Steam Input's Desktop layout instead of Gamepad layout | Medium | Document the Deck setting; ship a one-line diagnostic in the shell menu (`js0` node present? Steam Input layout?) |
+| Steam Input's Desktop layout instead of Gamepad layout | Medium | Steam Input **cannot** be disabled for the Deck's built-in controller — the correct fix is to select the **Gamepad** action set and run in Game Mode (gamescope). Document it; ship a one-line diagnostic in the shell menu (`js0` node present? pad id?) |
 | SteamOS drops FUSE2 | Low | Static AppImage runtime — FUSE3-free, no `libfuse` dependency |
 | `APPIMAGE` env unset → updater inert | Low | Document launching the `.AppImage` directly; warn in the shell when `electron-updater` reports inactive |
 | Upstream game changes break the client | Low | The client is a thin loader; it fails soft (the page still renders) |
