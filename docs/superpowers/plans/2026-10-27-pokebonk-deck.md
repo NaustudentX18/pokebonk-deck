@@ -1362,8 +1362,24 @@ Expected: a `https://naustudentx18.github.io/pokebonk-deck/` URL.
 
 - [ ] **Step 1: Install on the Deck**
 
-Download the AppImage on the Deck (or copy it over), `chmod +x`, add it to Steam as a
-non-Steam game with launch option `gamemoderun %command%`.
+`tools/deck-verify.sh` automates every check below — run it on the Deck in Desktop Mode and
+paste the output back:
+
+```bash
+bash deck-verify.sh
+```
+
+It covers the eight things that can silently break the client: user namespaces (the
+Electron sandbox prerequisite), the GPU stack, the **joydev** node Chromium requires, udev
+visibility inside the Steam Linux Runtime container, the Steam Input action set, and the
+AppImage's library prerequisites.
+
+Then install: download the AppImage, `chmod +x`, add it to Steam as a non-Steam game with
+launch option `gamemoderun %command%`.
+
+> Note: the Deck's SSH server is **off by default**. Enable it in Desktop Mode →
+> Settings → System → SteamOS → Enable SSH, or run `sudo systemctl enable --now sshd`.
+> Until then the only paths in are the Deck's own browser/terminal or a LAN HTTP pull.
 
 - [ ] **Step 2: Confirm the joydev node exists**
 
