@@ -146,10 +146,11 @@ if command -v python3 >/dev/null; then
   curl -fsSL -o "$STEAM_TOOL" "$STEAM_TOOL_URL" 2>/dev/null || true
   if [ -s "$STEAM_TOOL" ]; then
     if python3 "$STEAM_TOOL" --exe "$APPIMAGE" --name "PokéBonk Deck" \
-         --launcher "$LAUNCHER" --resolution "1280x800"; then
-      say "Steam is set up"
+         --launcher "$LAUNCHER" --resolution "1280x800" > "$INSTALL_DIR/steam-setup.log" 2>&1; then
+      say "Steam is set up — the game is in your library and in Game Mode"
     else
-      warn "the Steam integration failed — add the AppImage by hand if needed"
+      warn "the Steam integration could not complete (see $INSTALL_DIR/steam-setup.log)"
+      warn "add it by hand: Library -> Add a Non-Steam Game -> $APPIMAGE"
     fi
   else
     warn "could not fetch the Steam integration helper"
@@ -167,9 +168,9 @@ Play it now:
   $APPIMAGE
 
 In Steam: it is in your library as "PokéBonk Deck" — start it from Game Mode
-with the Deck's controller. Launch options are set to
-  gamemoderun %command%
-and Steam Input is enabled for it.
+with the Deck's controller. Steam Input is set to the gamepad layout, the
+resolution is pinned to 1280x800, and the launch goes through a wrapper that
+uses gamemode when it is available.
 
 The app checks pokebonk.com for new game builds on launch and reloads itself
 when the upstream game updates.
