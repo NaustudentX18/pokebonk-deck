@@ -286,7 +286,7 @@ async function runSelfTest() {
       focused: win.isFocused(),
       fullScreen: win.isFullScreen(),
       bounds: `${bounds.width}x${bounds.height}+${bounds.x}+${bounds.y}`,
-      screen: `${win.getAllWindows().length} window(s)`
+      windows: BrowserWindow.getAllWindows().length
     }
   } catch (error) {
     out.checks.window = { error: String(error.message || error) }

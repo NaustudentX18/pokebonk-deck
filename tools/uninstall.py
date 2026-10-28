@@ -1,27 +1,43 @@
 #!/usr/bin/env python3
-"""Remove every trace of the PokéBonk Deck client.
+"""Remove EVERYTHING to do with PokéBonk Deck.
 
-Safe to run at any time: it only ever removes what the installer created, and
-it leaves the rest of the Steam library alone.
+After this runs the machine is exactly as it was before the client was ever
+installed, so a fresh install can be tested end to end.
 
-    python3 uninstall.py            # remove it
-    python3 uninstall.py --dry-run  # show what would go
+It removes:
+
+  * the installed app, its wrapper, its artwork and its logs
+  * the client's state and cache
+  * the launcher entry and the icon
+  * any AppImage you copied in by hand (Downloads, Desktop, home)
+  * the Steam shortcut, the per-title localconfig block, the per-title
+    Steam Input layout and the capsule artwork
+  * the temporary files the client leaves behind
+
+It leaves everything else alone: your other library entries, your other
+localconfig settings, your other Steam Input layouts.
+
+    python3 uninstall.py             # do it
+    python3 uninstall.py --dry-run   # show the plan and stop
 """
 
 from __future__ import annotations
 
 import argparse
+import glob
 import os
 import pathlib
 import re
 import shutil
 import struct
 import sys
+import time
 
+# --------------------------------------------------------------------------- #
 # The binary KeyValues1 reader/writer is vendored in here on purpose: this
 # script has to work as a single downloaded file, with nothing else beside it.
+# --------------------------------------------------------------------------- #
 
-# Type bytes in Valve's binary KeyValues1 format.
 KV_MAP = 0x00
 KV_STRING = 0x01
 KV_INT32 = 0x02
@@ -33,7 +49,6 @@ class BinVdfError(Exception):
 
 
 def read_bin_vdf(data: bytes):
-    """Parse a binary KeyValues1 blob into nested dicts/lists/values."""
     pos = 0
 
     def read_cstring() -> str:
@@ -52,16 +67,13 @@ def read_bin_vdf(data: bytes):
         if kind == KV_INT32:
             if pos + 4 > len(data):
                 raise BinVdfError("truncated int32")
-            # Unsigned: shortcut appids live in [0x80000000, 0xFFFFFFFF] and
-            # do not fit a signed 32-bit int.
+            # Unsigned: shortcut appids live in [0x80000000, 0xFFFFFFFF].
             value = struct.unpack_from("<I", data, pos)[0]
             pos += 4
             return value
         if kind == KV_MAP:
             return read_map()
-        if kind in (0x06, 0x07):  # uint64 / int64
-            if pos + 8 > len(data):
-                raise BinVdfError("truncated int64")
+        if kind in (0x06, 0x07):
             pos += 8
             return 0
         raise BinVdfError(f"unknown type byte 0x{kind:02x}")
@@ -81,23 +93,16 @@ def read_bin_vdf(data: bytes):
 
     root = read_map()
     if pos != len(data):
-        # Trailing bytes mean we did not understand the file. Refuse to write.
         raise BinVdfError(f"{len(data) - pos} trailing bytes")
     return root
 
 
 def write_bin_vdf(root: dict) -> bytes:
-    """Serialise back to Valve's binary KeyValues1, byte-for-byte reversible."""
     out = bytearray()
 
     def write_cstring(text: str) -> None:
         out.extend(text.encode("utf-8"))
         out.append(0)
-
-    def write_map(mapping: dict) -> None:
-        for key, value in mapping.items():
-            write_entry(key, value)
-        out.append(KV_END)
 
     def write_entry(key: str, value) -> None:
         if isinstance(value, str):
@@ -119,42 +124,129 @@ def write_bin_vdf(root: dict) -> bytes:
         else:
             raise BinVdfError(f"cannot serialise {type(value)}")
 
+    def write_map(mapping: dict) -> None:
+        for key, value in mapping.items():
+            write_entry(key, value)
+        out.append(KV_END)
+
     shortcuts = root.get("shortcuts", {})
     if not isinstance(shortcuts, dict):
         raise BinVdfError("the root map has no 'shortcuts' section")
 
-    # File shape: <00> "shortcuts" <entry...> <08> <08>
-    # The leading 0x00 is the root map's type byte; the two end markers close
-    # the "shortcuts" map and then the file.
     out.append(KV_MAP)
     write_cstring("shortcuts")
     for key, value in shortcuts.items():
         write_entry(key, value)
-    out.append(KV_END)  # end of the "shortcuts" map
-    out.append(KV_END)  # end of the file
+    out.append(KV_END)
+    out.append(KV_END)
     return bytes(out)
 
 
+# --------------------------------------------------------------------------- #
+# What counts as ours
+# --------------------------------------------------------------------------- #
+
+MARKERS = ("pokebonk-deck", "pokebonk deck", "pokebonk_deck", "pokebonkdeck")
 
 HOME = pathlib.Path.home()
 INSTALL_DIR = HOME / ".local/share/pokebonk-deck"
-DESKTOP_FILE = HOME / ".local/share/applications/gg.pokebonk.deck.desktop"
-ICON_FILE = HOME / ".local/share/icons/hicolor/512x512/apps/pokebonk-deck.png"
 STATE_DIR = HOME / ".config/pokebonk-deck"
-STEAM_ROOTS = (
+CACHE_DIR = HOME / ".cache/pokebonk-deck"
+DESKTOP_FILE = HOME / ".local/share/applications/gg.pokebonk.deck.desktop"
+ICON_DIRS = [
+    HOME / ".local/share/icons/hicolor/512x512/apps",
+    HOME / ".local/share/icons/hicolor/256x256/apps",
+    HOME / ".local/share/icons/hicolor/128x128/apps",
+    HOME / ".local/share/icons/hicolor/64x64/apps",
+    HOME / ".local/share/icons/hicolor/scalable/apps",
+]
+STEAM_ROOTS = [
     HOME / ".local/share/Steam",
     HOME / ".steam/steam",
     HOME / ".steam/root",
-)
+    HOME / ".var/app/com.valvesoftware.Steam/.local/share/Steam",
+]
+# Where a person might have dropped the AppImage they downloaded.
+MANUAL_COPY_DIRS = [HOME / "Downloads", HOME / "Desktop", HOME]
 
-# Anything under these names belongs to us.
-OUR_MARKERS = ("pokebonk-deck", "pokebonk deck")
+ARTWORK_NAMES = {
+    "library_hero.jpg", "library_capsule.jpg", "capsule.jpg", "capsulev5.jpg",
+    "header.jpg", "logo.png", "icon.jpg", "icon.png", "purchased.jpg",
+}
 
 
 def ours(text: str) -> bool:
     lowered = str(text).lower()
-    return any(marker in lowered for marker in OUR_MARKERS)
+    return any(marker in lowered for marker in MARKERS)
 
+
+class Report:
+    def __init__(self, dry: bool):
+        self.dry = dry
+        self.lines: list[str] = []
+
+    def remove(self, what: str, path) -> None:
+        path = pathlib.Path(path)
+        if not path.exists() and not path.is_symlink():
+            return
+        verb = "would remove" if self.dry else "removing"
+        self.lines.append(f"  {verb} {what}: {path}")
+        if self.dry:
+            return
+        try:
+            if path.is_dir() and not path.is_symlink():
+                shutil.rmtree(path, ignore_errors=True)
+            else:
+                path.unlink()
+        except OSError as error:
+            self.lines.append(f"  ! could not remove {path}: {error}")
+
+
+# --------------------------------------------------------------------------- #
+# 1. Stop anything that is running
+# --------------------------------------------------------------------------- #
+
+def stop_running_client(report: Report) -> None:
+    killed = []
+    for proc in pathlib.Path("/proc").iterdir():
+        if not proc.name.isdigit():
+            continue
+        try:
+            comm = (proc / "comm").read_text().strip()
+            cmdline = (proc / "cmdline").read_bytes().decode("utf-8", "replace")
+        except OSError:
+            continue
+        if comm in ("pokebonk-deck",) or ".mount_pokebonk" in cmdline:
+            killed.append(proc.name)
+    if not killed:
+        return
+    report.lines.append(f"  stopping the running client (pid {', '.join(killed)})")
+    if report.dry:
+        return
+    for pid in killed:
+        try:
+            os.kill(int(pid), 15)
+        except OSError:
+            pass
+    time.sleep(1)
+
+
+def steam_client_running() -> bool:
+    for proc in pathlib.Path("/proc").iterdir():
+        if not proc.name.isdigit():
+            continue
+        try:
+            comm = (proc / "comm").read_text().strip()
+        except OSError:
+            continue
+        if comm in ("steam", "steamwebhelper"):
+            return True
+    return False
+
+
+# --------------------------------------------------------------------------- #
+# 2. Steam
+# --------------------------------------------------------------------------- #
 
 def userdata_dirs(root: pathlib.Path):
     base = root / "userdata"
@@ -163,52 +255,8 @@ def userdata_dirs(root: pathlib.Path):
     return [d for d in base.iterdir() if d.is_dir() and d.name.isdigit()]
 
 
-def remove_shortcuts(root: pathlib.Path, dry: bool) -> list[str]:
-    """Drop our entries from the binary shortcuts.vdf, keep every other one."""
-    removed = []
-    for profile in userdata_dirs(root):
-        shortcuts = profile / "config" / "shortcuts.vdf"
-        if not shortcuts.is_file():
-            continue
-        try:
-            parsed = read_bin_vdf(shortcuts.read_bytes())
-        except (OSError, BinVdfError) as error:
-            print(f"  ! {shortcuts}: {error}")
-            continue
-
-        entries = parsed.get("shortcuts", {})
-        if not isinstance(entries, dict):
-            continue
-
-        keep = {}
-        for index, entry in entries.items():
-            if isinstance(entry, dict) and (
-                ours(entry.get("exe", "")) or ours(entry.get("appname", ""))
-            ):
-                removed.append(f"shortcut {entry.get('appname') or entry.get('exe')!r} "
-                               f"(appid {entry.get('appid')})")
-                continue
-            keep[index] = entry
-
-        if len(keep) == len(entries):
-            continue
-        parsed["shortcuts"] = keep
-        if dry:
-            continue
-        shutil.copy2(shortcuts, shortcuts.with_suffix(".vdf.bak"))
-        try:
-            shortcuts.write_bytes(write_bin_vdf(parsed))
-        except OSError as error:
-            print(f"  ! could not write {shortcuts}: {error}")
-    return removed
-
-
 def our_appids(root: pathlib.Path) -> dict:
-    """Map each profile directory to the appids of our shortcuts.
-
-    This has to run BEFORE the shortcuts are removed — once they are gone
-    there is nothing left to tell us which appid was ours.
-    """
+    """profile directory -> the appids of our shortcuts."""
     found = {}
     for profile in userdata_dirs(root):
         shortcuts = profile / "config" / "shortcuts.vdf"
@@ -230,140 +278,252 @@ def our_appids(root: pathlib.Path) -> dict:
     return found
 
 
-def remove_localconfig(root: pathlib.Path, dry: bool, appids=None) -> list[str]:
-    """Remove the per-app blocks we added to localconfig.vdf."""
-    removed = []
+def clean_shortcuts(root: pathlib.Path, report: Report) -> None:
+    for profile in userdata_dirs(root):
+        shortcuts = profile / "config" / "shortcuts.vdf"
+        if not shortcuts.is_file():
+            continue
+        try:
+            parsed = read_bin_vdf(shortcuts.read_bytes())
+        except (OSError, BinVdfError) as error:
+            report.lines.append(f"  ! {shortcuts}: {error}")
+            continue
+
+        entries = parsed.get("shortcuts", {})
+        if not isinstance(entries, dict):
+            continue
+
+        keep, dropped = {}, []
+        for index, entry in entries.items():
+            if isinstance(entry, dict) and (ours(entry.get("exe", "")) or ours(entry.get("appname", ""))):
+                dropped.append(entry.get("appname") or entry.get("exe"))
+                continue
+            keep[index] = entry
+
+        if not dropped:
+            continue
+        for name in dropped:
+            report.lines.append(f"  {'would remove' if report.dry else 'removing'} Steam shortcut: {name}")
+        if report.dry:
+            continue
+        parsed["shortcuts"] = keep
+        try:
+            shutil.copy2(shortcuts, shortcuts.with_suffix(".vdf.bak"))
+            shortcuts.write_bytes(write_bin_vdf(parsed))
+        except OSError as error:
+            report.lines.append(f"  ! could not write {shortcuts}: {error}")
+
+
+def clean_localconfig(root: pathlib.Path, report: Report, appids: dict) -> None:
     for profile in userdata_dirs(root):
         localconfig = profile / "config" / "localconfig.vdf"
         if not localconfig.is_file():
             continue
         text = localconfig.read_text(encoding="utf-8", errors="surrogateescape")
-
-        # Our blocks are the ones whose appid we recorded in the shortcuts file.
-        if appids is None:
-            appids = our_appids(root)
-        ours_for_profile = appids.get(profile, set())
-
         changed = False
-        for appid in ours_for_profile:
+        for appid in appids.get(profile, set()):
             pattern = re.compile(
-                r'\n[ \t]*"' + re.escape(appid) + r'"[ \t]*\n[ \t]*\{[^{}]*\}',
-                re.S)
+                r'\n[ \t]*"' + re.escape(appid) + r'"[ \t]*\n[ \t]*\{[^{}]*\}', re.S)
             new_text, count = pattern.subn("", text)
             if count:
                 text = new_text
                 changed = True
-                removed.append(f"localconfig block for appid {appid}")
+                report.lines.append(
+                    f"  {'would remove' if report.dry else 'removing'} localconfig block for appid {appid}")
+        if changed and not report.dry:
+            try:
+                shutil.copy2(localconfig, localconfig.with_suffix(".vdf.bak"))
+                localconfig.write_text(text, encoding="utf-8", errors="surrogateescape")
+            except OSError as error:
+                report.lines.append(f"  ! could not write {localconfig}: {error}")
 
-        if changed and not dry:
-            shutil.copy2(localconfig, localconfig.with_suffix(".vdf.bak"))
-            localconfig.write_text(text, encoding="utf-8", errors="surrogateescape")
-    return removed
 
-
-def remove_input_config(root: pathlib.Path, dry: bool) -> list[str]:
-    """Remove our entry from the per-title Steam Input configset."""
-    removed = []
+def clean_input_config(root: pathlib.Path, report: Report) -> None:
     for profile in userdata_dirs(root):
-        base = root / "steamapps/common/Steam Controller Configs" / profile.name / "config"
+        base = (root / "steamapps/common/Steam Controller Configs" / profile.name / "config")
         configset = base / "configset_controller_neptune.vdf"
         if not configset.is_file():
             continue
         text = configset.read_text(encoding="utf-8", errors="replace")
         changed = False
-        for marker in OUR_MARKERS:
-            key = "".join(c for c in marker.lower()
-                           if c not in '/\\?%*:|"<>.')
+        for marker in MARKERS:
+            key = "".join(c for c in marker.lower() if c not in '/\\?%*:|"<>.')
             pattern = re.compile(r'\t"' + re.escape(key) + r'"\n\t\{[^{}]*\}\n', re.S)
             text, count = pattern.subn("", text)
             if count:
                 changed = True
-                removed.append(f"Steam Input layout for {key!r}")
-        if changed and not dry:
-            shutil.copy2(configset, configset.with_suffix(".vdf.bak"))
-            configset.write_text(text, encoding="utf-8")
-    return removed
+                report.lines.append(
+                    f"  {'would remove' if report.dry else 'removing'} Steam Input layout for {key!r}")
+        if changed and not report.dry:
+            try:
+                shutil.copy2(configset, configset.with_suffix(".vdf.bak"))
+                configset.write_text(text, encoding="utf-8")
+            except OSError as error:
+                report.lines.append(f"  ! could not write {configset}: {error}")
 
 
-def remove_artwork(root: pathlib.Path, dry: bool) -> list[str]:
-    """Remove the capsule art we installed into <steam>/app/<appid>/."""
-    removed = []
+def clean_artwork(root: pathlib.Path, report: Report) -> None:
     app_root = root / "app"
     if not app_root.is_dir():
-        return removed
+        return
     for app_dir in app_root.iterdir():
         if not app_dir.is_dir():
             continue
         names = {f.name for f in app_dir.iterdir()}
-        if names & {"library_hero.jpg", "library_capsule.jpg", "capsulev5.jpg"}:
-            removed.append(f"capsule artwork in app/{app_dir.name}/")
-            if not dry:
-                for name in names:
-                    if name in {"library_hero.jpg", "library_capsule.jpg",
-                                "capsule.jpg", "capsulev5.jpg", "header.jpg",
-                                "logo.png", "icon.jpg", "purchased.jpg"}:
-                        try:
-                            (app_dir / name).unlink()
-                        except OSError:
-                            pass
+        if not (names & ARTWORK_NAMES):
+            continue
+        report.lines.append(
+            f"  {'would remove' if report.dry else 'removing'} capsule artwork: {app_dir}")
+        if report.dry:
+            continue
+        for name in names & ARTWORK_NAMES:
+            try:
+                (app_dir / name).unlink()
+            except OSError:
+                pass
+        try:
+            app_dir.rmdir()
+        except OSError:
+            pass
+
+
+def clean_steam_backups(root: pathlib.Path, report: Report) -> None:
+    """Remove the .bak files we wrote, but only if they still mention us."""
+    for profile in userdata_dirs(root):
+        for name in ("shortcuts.vdf.bak", "localconfig.vdf.bak"):
+            backup = profile / "config" / name
+            if not backup.is_file():
+                continue
+            try:
+                blob = backup.read_bytes()
+            except OSError:
+                continue
+            if not any(marker.encode() in blob.lower() for marker in MARKERS):
+                continue
+            report.remove(f"backup {name}", backup)
+
+
+# --------------------------------------------------------------------------- #
+# 3. The app's own files
+# --------------------------------------------------------------------------- #
+
+def clean_app_files(report: Report) -> None:
+    report.remove("the installed app", INSTALL_DIR)
+    report.remove("the client's state", STATE_DIR)
+    report.remove("the client's cache", CACHE_DIR)
+    report.remove("the launcher entry", DESKTOP_FILE)
+    for icon_dir in ICON_DIRS:
+        if not icon_dir.is_dir():
+            continue
+        for icon in icon_dir.iterdir():
+            if ours(icon.name):
+                report.remove("the icon", icon)
+
+
+def clean_manual_copies(report: Report) -> None:
+    """Any AppImage the user copied in by hand."""
+    seen = set()
+    for directory in MANUAL_COPY_DIRS:
+        if not directory.is_dir():
+            continue
+        try:
+            entries = list(directory.iterdir())
+        except OSError:
+            continue
+        for entry in entries:
+            if entry in seen or not entry.is_file():
+                continue
+            name = entry.name.lower()
+            if name.endswith(".appimage") and ours(name):
+                seen.add(entry)
+                report.remove("a copy you downloaded", entry)
+
+
+def clean_temp(report: Report) -> None:
+    for pattern in ("/tmp/.mount_pokebonk*", "/tmp/pokebonk-deck*",
+                    "/tmp/pokebonk_deck*"):
+        for path in glob.glob(pattern):
+            report.remove("a temporary file", path)
+
+
+# --------------------------------------------------------------------------- #
+# 4. Verify
+# --------------------------------------------------------------------------- #
+
+def verify(report: Report) -> list[str]:
+    """What is still there? Anything listed here is a leftover."""
+    leftovers = []
+    for path in (INSTALL_DIR, STATE_DIR, CACHE_DIR, DESKTOP_FILE):
+        if path.exists():
+            leftovers.append(str(path))
+    for root in STEAM_ROOTS:
+        if not root.is_dir():
+            continue
+        for profile in userdata_dirs(root):
+            shortcuts = profile / "config" / "shortcuts.vdf"
+            if shortcuts.is_file():
                 try:
-                    app_dir.rmdir()
-                except OSError:
-                    pass
-    return removed
+                    entries = read_bin_vdf(shortcuts.read_bytes()).get("shortcuts", {})
+                except (OSError, BinVdfError):
+                    entries = {}
+                for entry in entries.values():
+                    if isinstance(entry, dict) and (ours(entry.get("exe", ""))
+                                                    or ours(entry.get("appname", ""))):
+                        leftovers.append(f"Steam shortcut {entry.get('appname')!r}")
+        art = root / "app"
+        if art.is_dir():
+            for app_dir in art.iterdir():
+                if app_dir.is_dir() and ({f.name for f in app_dir.iterdir()} & ARTWORK_NAMES):
+                    leftovers.append(f"capsule artwork {app_dir}")
+    return leftovers
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="show what would be removed and change nothing")
     args = parser.parse_args()
 
-    print("PokéBonk Deck uninstaller")
+    report = Report(args.dry_run)
+    print("PokéBonk Deck — complete uninstall")
     if args.dry_run:
         print("(dry run — nothing is changed)")
 
-    try:
-        from steam_integration import steam_client_running
-        if steam_client_running():
-            print("  ! the Steam client is running — it rewrites shortcuts.vdf on exit,")
-            print("    so it may put the shortcut back. Quit Steam first, then run this.")
-    except ImportError:
-        pass
+    if steam_client_running():
+        print("  ! the Steam client is running — it rewrites shortcuts.vdf on exit,")
+        print("    so quit Steam first, then run this.")
 
-    # 1. Files the installer created.
-    for path in (INSTALL_DIR, STATE_DIR):
-        if path.exists():
-            print(f"  {'would remove' if args.dry_run else 'removing'} {path}")
-            if not args.dry_run:
-                shutil.rmtree(path, ignore_errors=True)
-    for path in (DESKTOP_FILE, ICON_FILE):
-        if path.exists():
-            print(f"  {'would remove' if args.dry_run else 'removing'} {path}")
-            if not args.dry_run:
-                try:
-                    path.unlink()
-                except OSError:
-                    pass
+    stop_running_client(report)
 
-    # 2. Steam.
     for root in STEAM_ROOTS:
         if not root.is_dir():
             continue
-        # Collect our appids before the shortcuts go away.
         appids = our_appids(root)
-        for what, result in (
-            ("shortcut", remove_shortcuts(root, args.dry_run)),
-            ("localconfig", remove_localconfig(root, args.dry_run, appids)),
-            ("steam input", remove_input_config(root, args.dry_run)),
-            ("artwork", remove_artwork(root, args.dry_run)),
-        ):
-            for line in result:
-                print(f"  {'would remove' if args.dry_run else 'removing'} {what}: {line}")
+        clean_shortcuts(root, report)
+        clean_localconfig(root, report, appids)
+        clean_input_config(root, report)
+        clean_artwork(root, report)
+        clean_steam_backups(root, report)
 
+    clean_app_files(report)
+    clean_manual_copies(report)
+    clean_temp(report)
+
+    for line in report.lines:
+        print(line)
+
+    leftovers = verify(report)
+    print()
     if args.dry_run:
-        print("\nDry run complete. Re-run without --dry-run to remove.")
+        print(f"Dry run complete. {len(report.lines)} item(s) would be removed.")
+        return 0
+
+    if leftovers:
+        print("Still present (the Steam client may have put these back — quit Steam and re-run):")
+        for item in leftovers:
+            print(f"  - {item}")
     else:
-        print("\nRemoved. The Deck is back to a fresh-install state.")
+        print("Everything is gone. The machine is back to a fresh-install state.")
     return 0
 
 

@@ -124,15 +124,23 @@ if [ -n "\${LD_PRELOAD:-}" ]; then
       *) cleaned="\${cleaned:+\$cleaned:}\$lib" ;;
     esac
   done
-  LD_PRELOAD="\$cleaned"
-  export LD_PRELOAD
+  if [ -n "\$cleaned" ]; then
+    LD_PRELOAD="\$cleaned"
+    export LD_PRELOAD
+  else
+    # An empty LD_PRELOAD is not the same as an absent one for every loader.
+    unset LD_PRELOAD
+  fi
   [ "\$removed" = "1" ] && echo "[deck] the Steam overlay was removed from the preload chain" >&2
 fi
 
+LOG="$INSTALL_DIR/launch.log"
+[ -w "\$(dirname "\$LOG")" ] || LOG="\${TMPDIR:-/tmp}/pokebonk-deck-launch.log"
+
 if command -v gamemoderun >/dev/null 2>&1; then
-  exec gamemoderun "\$APP" "\$@"
+  exec gamemoderun "\$APP" "\$@" 2>&1 | tee -a "\$LOG"
 fi
-exec "\$APP" "\$@"
+exec "\$APP" "\$@" 2>&1 | tee -a "\$LOG"
 EOF
 chmod +x "$LAUNCHER"
 say "wrote $LAUNCHER"

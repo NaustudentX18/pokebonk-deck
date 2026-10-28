@@ -29,6 +29,7 @@
     <a href="#media">Media</a>
     <a href="#tips">Pro Tips</a>
     <a href="#faq">FAQ</a>
+    <a href="#uninstall">Uninstall</a>
   </nav>
   <div class="nav-actions">
     <a class="nav-cta" href="#install">
@@ -564,6 +565,42 @@ chmod +x PokebonkDeck-1.1.0-x86_64.AppImage
     </div>
   </section>
 
+  <!-- ===================== UNINSTALL ===================== -->
+  <section class="wrap section" id="uninstall" style="padding-top:12px">
+    <div class="section-head">
+      <p class="eyebrow">Uninstall</p>
+      <h2>One command takes it all away.</h2>
+      <p>Everything the installer created, and nothing else — so the next install starts
+      from a genuinely clean machine.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div>
+          <h3>Remove it completely</h3>
+          <p>Quit the Steam client first — it keeps the shortcut list in memory and would
+          write it back on exit. Then run this on the Deck or any Linux box:</p>
+          <div class="code-terminal">
+            <pre><span class="highlight">curl</span> -fsSL https://github.com/NaustudentX18/pokebonk-deck/releases/latest/download/uninstall.sh | bash</pre>
+          </div>
+          <p>It removes the app, its state and cache, the launcher entry and icon, any
+          AppImage you downloaded by hand, the Steam shortcut, the per-title
+          <code>localconfig.vdf</code> block, the controller layout and the capsule
+          artwork — then verifies that nothing of ours is left behind.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <h3>Or see the plan first</h3>
+          <p>Nothing is changed until you confirm — useful on a machine with a busy Steam
+          library.</p>
+          <div class="code-terminal">
+            <pre><span class="highlight">curl</span> -fsSL https://github.com/NaustudentX18/pokebonk-deck/releases/latest/download/uninstall.sh | bash -s -- --dry-run</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ===================== CALLOUT CTA ===================== -->
   <section class="wrap section" style="padding-top:12px">
     <div class="callout">
@@ -619,6 +656,20 @@ chmod +x PokebonkDeck-1.1.0-x86_64.AppImage
 
 <!-- ===================== CLIENT SCRIPTS ===================== -->
 <script>
+  // The version badge follows the releases instead of being edited by hand.
+  fetch('https://api.github.com/repos/NaustudentX18/pokebonk-deck/releases/latest')
+    .then(r => r.json())
+    .then(rel => {
+      if (!rel || !rel.tag_name) return
+      const version = rel.tag_name
+      document.querySelectorAll('.brand-ver').forEach(el => { el.textContent = version })
+      const cta = document.querySelector('.nav-cta')
+      if (cta && cta.childNodes.length) {
+        cta.childNodes[cta.childNodes.length - 1].textContent = ' Install ' + version
+      }
+    })
+    .catch(() => {})
+
   // Tab switcher
   function switchTab(tabId, btn) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));

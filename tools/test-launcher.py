@@ -33,6 +33,14 @@ def extract_wrapper(install_sh: str) -> str:
     return body
 
 
+def preload_of(stdout: str) -> str:
+    """The APP-PRELOAD line the test app prints."""
+    for line in stdout.splitlines():
+        if line.startswith("APP-PRELOAD="):
+            return line.strip()
+    return stdout.strip()
+
+
 def main() -> int:
     install_sh = (REPO / "install.sh").read_text()
     wrapper = extract_wrapper(install_sh)
@@ -44,30 +52,35 @@ def main() -> int:
         app.write_text('#!/bin/sh\necho "APP-PRELOAD=[${LD_PRELOAD:-}]"\n')
         app.chmod(0o755)
 
+        # Real libraries, so the loader does not print "cannot be preloaded".
+        lib_a = "/usr/lib/libglib-2.0.so.0"
+        lib_b = "/usr/lib/libz.so.1"
+        overlay = "/home/deck/.local/share/Steam/gameoverlayrenderer.so"
+
         launcher = work / "launch.sh"
         launcher.write_text(wrapper.replace('"$APPIMAGE"', f'"{app}"'))
         launcher.chmod(0o755)
 
         # 1. The overlay library is removed, everything else stays.
         env = dict(os.environ)
-        env["LD_PRELOAD"] = "/usr/lib/libone.so:/home/deck/.steam/steam/gameoverlayrenderer.so:/usr/lib/libtwo.so"
+        env["LD_PRELOAD"] = f"{lib_a}:{overlay}:{lib_b}"
         out = subprocess.run([str(launcher)], env=env, capture_output=True, text=True, timeout=20)
-        preload = out.stdout.strip()
-        expected = "APP-PRELOAD=[/usr/lib/libone.so:/usr/lib/libtwo.so]"
+        preload = preload_of(out.stdout)
+        expected = f"APP-PRELOAD=[{lib_a}:{lib_b}]"
         if preload != expected:
             failures.append(f"preload not cleaned as expected:\n    got      {preload}\n    expected {expected}")
 
         # 2. With no overlay in the chain, the chain is left alone.
-        env["LD_PRELOAD"] = "/usr/lib/libone.so"
+        env["LD_PRELOAD"] = lib_a
         out = subprocess.run([str(launcher)], env=env, capture_output=True, text=True, timeout=20)
-        if "APP-PRELOAD=[/usr/lib/libone.so]" not in out.stdout:
-            failures.append(f"a clean preload chain was modified: {out.stdout.strip()}")
+        if preload_of(out.stdout) != f"APP-PRELOAD=[{lib_a}]":
+            failures.append(f"a clean preload chain was modified: {preload_of(out.stdout)!r}")
 
         # 3. With no preload at all the app still runs.
         env.pop("LD_PRELOAD", None)
         out = subprocess.run([str(launcher)], env=env, capture_output=True, text=True, timeout=20)
-        if "APP-PRELOAD=[]" not in out.stdout:
-            failures.append(f"the app did not run without LD_PRELOAD: {out.stdout.strip()!r}")
+        if preload_of(out.stdout) != "APP-PRELOAD=[]":
+            failures.append(f"the app did not run without LD_PRELOAD: {preload_of(out.stdout)!r}")
 
     if failures:
         print("FAIL")

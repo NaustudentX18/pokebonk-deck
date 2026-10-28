@@ -75,6 +75,28 @@ keyboard) and **Gamepad**. The game reads the Gamepad API, so use the Gamepad la
 
 If the controller does not appear at all, see [troubleshooting.md](troubleshooting.md).
 
+## Uninstalling completely
+
+```bash
+curl -fsSL https://github.com/NaustudentX18/pokebonk-deck/releases/latest/download/uninstall.sh | bash
+```
+
+Quit the Steam client first — it keeps the shortcut list in memory and rewrites
+`shortcuts.vdf` on exit, which would put the shortcut back.
+
+The uninstaller removes the app, its state and cache, the launcher entry and
+icon, any AppImage you downloaded by hand, the Steam shortcut, the per-title
+`localconfig.vdf` block, the per-title Steam Input layout and the capsule
+artwork, then verifies that nothing of ours is left. Your other library
+entries, `localconfig` settings and Steam Input layouts are untouched, and
+`shortcuts.vdf` and `localconfig.vdf` are backed up before being edited.
+
+Preview it without changing anything:
+
+```bash
+curl -fsSL https://github.com/NaustudentX18/pokebonk-deck/releases/latest/download/uninstall.sh | bash -s -- --dry-run
+```
+
 ## Desktop Linux
 
 ```bash

@@ -115,20 +115,41 @@ controller, and Desktop Layout would send mouse/keyboard instead.
 
 ## Uninstall
 
-One command, and the machine is back exactly as it was before:
+One command takes **everything** away, so the next install starts from a
+genuinely clean machine:
 
 ```bash
 curl -fsSL https://github.com/NaustudentX18/pokebonk-deck/releases/latest/download/uninstall.sh | bash
 ```
 
-It removes the app, the desktop entry, the icon, the app's state, the Steam
-shortcut, the `localconfig.vdf` block, the per-title Steam Input entry and the
-capsule artwork. Everything else in your Steam library is left alone, and
-`shortcuts.vdf` and `localconfig.vdf` are backed up first.
+It removes:
+
+| | |
+|---|---|
+| the installed app | `~/.local/share/pokebonk-deck/` — the AppImage, the launcher, the artwork, the logs |
+| the client's state and cache | `~/.config/pokebonk-deck/`, `~/.cache/pokebonk-deck/` |
+| the launcher entry and the icon | the `.desktop` file and the hicolor icons |
+| any copy you downloaded by hand | `PokebonkDeck-*.AppImage` in Downloads, Desktop or your home |
+| the Steam shortcut | the entry for it in `shortcuts.vdf` |
+| the per-title settings | the `localconfig.vdf` block for its appid |
+| the controller layout | the entry in `configset_controller_neptune.vdf` |
+| the capsule artwork | `<steam>/app/<appid>/` |
+| the leftovers | temporary files and the AppImage mount |
+
+Everything else is left alone: your other library entries, your other
+`localconfig` settings, your other Steam Input layouts. `shortcuts.vdf` and
+`localconfig.vdf` are backed up before they are edited.
+
+See what it would do first:
+
+```bash
+curl -fsSL https://github.com/NaustudentX18/pokebonk-deck/releases/latest/download/uninstall.sh | bash -s -- --dry-run
+```
 
 > Quit the Steam client before running it — the client keeps the shortcut list
 > in memory and rewrites `shortcuts.vdf` on exit, which would put the
-> shortcut back.
+> shortcut back. The uninstaller says so if the client is running, and it
+> checks afterwards that nothing of ours is left.
 
 ## How updates work
 
