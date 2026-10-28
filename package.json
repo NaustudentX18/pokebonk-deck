@@ -1,7 +1,7 @@
 {
   "name": "pokebonk-deck",
   "productName": "Pok\u00e9Bonk Deck",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Unofficial native Linux client for the Pok\u00e9Bonk browser game \u2014 built for Steam Deck.",
   "main": "src/main.js",
   "desktopName": "gg.pokebonk.deck.desktop",

@@ -146,11 +146,13 @@ STEAM_TOOL_URL="https://github.com/$REPO/releases/latest/download/steam_integrat
 STEAM_TOOL="$INSTALL_DIR/steam_integration.py"
 
 say "adding it to Steam (so it appears in Game Mode)…"
+STEAM_OK=0
 if command -v python3 >/dev/null; then
   curl -fsSL -o "$STEAM_TOOL" "$STEAM_TOOL_URL" 2>/dev/null || true
   if [ -s "$STEAM_TOOL" ]; then
     if python3 "$STEAM_TOOL" --exe "$APPIMAGE" --name "PokéBonk Deck" \
          --launcher "$LAUNCHER" --resolution "1280x800" > "$INSTALL_DIR/steam-setup.log" 2>&1; then
+      STEAM_OK=1
       say "Steam is set up — the game is in your library and in Game Mode"
     else
       warn "Steam was not set up (details: $INSTALL_DIR/steam-setup.log)"
@@ -172,14 +174,19 @@ $(say "done")
 Play it now:
   $APPIMAGE
 
-In Steam: it is in your library as "PokéBonk Deck" — start it from Game Mode
-with the Deck's controller. Steam Input is set to the gamepad layout, the
-resolution is pinned to 1280x800, and the launch goes through a wrapper that
-uses gamemode when it is available.
-
-The app checks pokebonk.com for new game builds on launch and reloads itself
+The client checks pokebonk.com for new game builds on launch and reloads itself
 when the upstream game updates.
 
 To uninstall:
   rm -rf "$INSTALL_DIR" "$DESKTOP_FILE"
 EOF
+
+if [ "$STEAM_OK" = "1" ]; then
+  cat <<'EOF'
+
+In Steam: it is in your library as "PokéBonk Deck" — start it from Game Mode
+with the Deck's controller. Steam Input is set to the gamepad layout, the
+resolution is pinned to 1280x800, and the launch goes through a wrapper that
+uses gamemode when it is available.
+EOF
+fi
