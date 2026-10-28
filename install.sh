@@ -114,6 +114,31 @@ else
   warn "no icon asset in the release (not fatal)"
 fi
 
+# --- 7. Steam integration ----------------------------------------------------
+# Adds the game to the Steam library so it shows up in Game Mode, with the
+# controller enabled, the Deck's native resolution and the gamemode launch
+# option applied.
+STEAM_TOOL_URL="https://raw.githubusercontent.com/$REPO/refs/heads/main/tools/steam_integration.py"
+STEAM_TOOL="$INSTALL_DIR/steam_integration.py"
+
+say "adding it to Steam (so it appears in Game Mode)…"
+if command -v python3 >/dev/null; then
+  curl -fsSL -o "$STEAM_TOOL" "$STEAM_TOOL_URL" 2>/dev/null || true
+  if [ -s "$STEAM_TOOL" ]; then
+    if python3 "$STEAM_TOOL" --exe "$APPIMAGE" --name "PokéBonk Deck" \
+         --launch-options "gamemoderun %command%" --resolution "1280x800"; then
+      say "Steam is set up"
+    else
+      warn "the Steam integration failed — add the AppImage by hand if needed"
+    fi
+  else
+    warn "could not fetch the Steam integration helper"
+  fi
+else
+  warn "python3 is not available, skipping the Steam integration"
+  warn "add it by hand: Library -> Add a Non-Steam Game -> $APPIMAGE"
+fi
+
 cat <<EOF
 
 $(say "done")
@@ -121,13 +146,13 @@ $(say "done")
 Play it now:
   $APPIMAGE
 
-Or add it to Steam: Library -> Add a Non-Steam Game -> pick
-  $APPIMAGE
-and set the launch option to
+In Steam: it is in your library as "PokéBonk Deck" — start it from Game Mode
+with the Deck's controller. Launch options are set to
   gamemoderun %command%
+and Steam Input is enabled for it.
 
-The app checks pokebonk.com for new game builds on launch and reloads
-itself when the upstream game updates.
+The app checks pokebonk.com for new game builds on launch and reloads itself
+when the upstream game updates.
 
 To uninstall:
   rm -rf "$INSTALL_DIR" "$DESKTOP_FILE"
