@@ -7,7 +7,7 @@ install, no `pacman`, no Flatpak, and no root.
 ## One command (any x86-64 Linux)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NaustudentX18/pokebonk-deck/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/NaustudentX18/pokebonk-deck/refs/heads/main/install.sh | bash
 ```
 
 Downloads the latest AppImage, verifies its sha512 against `latest-linux.yml`, installs it to

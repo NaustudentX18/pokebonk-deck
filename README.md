@@ -61,7 +61,7 @@ site as a top-level document and puts a console-shaped shell around it.
 One command, on any x86-64 Linux — including the Steam Deck's Desktop Mode terminal:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NaustudentX18/pokebonk-deck/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/NaustudentX18/pokebonk-deck/refs/heads/main/install.sh | bash
 ```
 
 That downloads the latest AppImage, verifies its sha512 against the published manifest,
