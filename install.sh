@@ -99,8 +99,32 @@ LAUNCHER="$INSTALL_DIR/pokebonk-deck-launch.sh"
 cat > "$LAUNCHER" <<EOF
 #!/bin/sh
 # PokéBonk Deck launcher.
-# Uses gamemode when it is available; falls back to a plain launch.
+#
+# Two things happen here:
+#
+# 1. The Steam overlay is stripped from the preload chain. Steam injects
+#    gameoverlayrenderer.so into the process it launches, and on Electron 45
+#    that renderer segfaults and takes the app down with it — the game then
+#    shows only Steam's own loading logo. Removing it here works even if the
+#    client has not re-read shortcuts.vdf yet.
+# 2. gamemode is used when it is available and skipped when it is not.
+#    gamemoderun is not on PATH inside the Steam Linux Runtime 3 container,
+#    and a missing binary would break the launch outright.
+
 APP="$APPIMAGE"
+
+if [ -n "\${LD_PRELOAD:-}" ]; then
+  cleaned=""
+  for lib in \$(printf '%s' "\$LD_PRELOAD" | tr ':' ' '); do
+    case "\$lib" in
+      *gameoverlayrenderer*) continue ;;
+      *) cleaned="\${cleaned:+\$cleaned:}\$lib" ;;
+    esac
+  done
+  LD_PRELOAD="\$cleaned"
+  export LD_PRELOAD
+fi
+
 if command -v gamemoderun >/dev/null 2>&1; then
   exec gamemoderun "\$APP" "\$@"
 fi

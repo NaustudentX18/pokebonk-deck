@@ -15,6 +15,10 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: npm test
+      - run: python3 tools/test-launcher.py
+      - run: python3 tools/test-steam-integration.py
+      - run: python3 tools/test-steam-e2e.py
+      - run: python3 tools/test-uninstall.py
 
   site:
     runs-on: ubuntu-latest
