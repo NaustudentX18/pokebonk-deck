@@ -52,9 +52,14 @@ const SOFTWARE_FLAG = 'softwareRendering'
 function useSoftwareRendering() {
   try {
     if (process.argv.includes('--force-gpu') || process.argv.includes('--reset-gpu')) {
+      // Clear a previously persisted fallback: the GPU works, so use it.
       writeState({ [SOFTWARE_FLAG]: false })
       return false
     }
+    // A relaunch after a GPU death asks for software rendering for THIS run
+    // only. Persisting it would leave the game crawling on SwiftShader for
+    // ever, which looks exactly like "it never finishes loading".
+    if (process.argv.includes('--software-rendering')) return true
     return Boolean(readState()[SOFTWARE_FLAG])
   } catch {
     return false
@@ -75,9 +80,8 @@ if (useSoftwareRendering()) {
 app.on('child-process-gone', (_event, details) => {
   if (details.type !== 'GPU') return
   if (useSoftwareRendering()) return
-  log('GPU process died — relaunching with software rendering')
-  writeState({ [SOFTWARE_FLAG]: true })
-  app.relaunch()
+  log('GPU process died — relaunching with software rendering for this run')
+  app.relaunch(['--software-rendering'])
   app.exit(0)
 })
 
