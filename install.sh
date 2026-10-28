@@ -145,6 +145,18 @@ EOF
 chmod +x "$LAUNCHER"
 say "wrote $LAUNCHER"
 
+# --- 5b. remote access ------------------------------------------------------
+# If the Deck's own SSH server is off, turn it on when that can be done
+# without prompting. It is what makes the machine reachable over the network
+# (and what lets a remote agent finish the setup).
+if ! systemctl is-active sshd >/dev/null 2>&1; then
+  if sudo -n systemctl enable --now sshd >/dev/null 2>&1; then
+    say "sshd is enabled — this machine is reachable over the network"
+  else
+    say "for remote access, run: sudo systemctl enable --now sshd"
+  fi
+fi
+
 # --- 6. desktop entry --------------------------------------------------------
 mkdir -p "$DESKTOP_DIR"
 cat > "$DESKTOP_FILE" <<EOF
