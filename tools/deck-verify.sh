@@ -90,9 +90,12 @@ line "8. The client itself"
 APPIMAGE="${POKEBONK_APPIMAGE:-$HOME/.local/share/pokebonk-deck/pokebonk-deck.AppImage}"
 if [ -x "$APPIMAGE" ]; then
   echo "  running the client self-test: $APPIMAGE"
-  SELFTEST="$(timeout 120 "$APPIMAGE" --selftest 2>&1 | grep -E 'SELFTEST_JSON' | head -1)"
+  SELFTEST="$(timeout 120 "$APPIMAGE" --selftest --screenshot /tmp/pokebonk-deck-window.png 2>&1 | grep -E 'SELFTEST_JSON' | head -1)"
   if [ -n "$SELFTEST" ]; then
     echo "  ${SELFTEST#SELFTEST_JSON }"
+    if [ -f /tmp/pokebonk-deck-window.png ]; then
+      echo "  captured what the app is showing: /tmp/pokebonk-deck-window.png"
+    fi
   else
     echo "  ! the self-test produced no result (run it by hand for the error)"
   fi
