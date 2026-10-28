@@ -19,7 +19,7 @@ An unofficial native Linux client for [PokéBonk](https://pokebonk.com) — the 
 Fullscreen on launch. Controller-native. Saves that persist. Game updates that arrive on their
 own. One AppImage, no install, no root.
 
-> **Status: v1.0.9 Released & Hardware Verified.** Tested and proven on Steam Deck (SteamOS 3.6+ OLED & LCD).
+> **Status: v1.1.0 Released & Hardware Verified.** Tested and proven on Steam Deck (SteamOS 3.6+ OLED & LCD).
 > Single-command installer handles Steam library shortcuts, Gamepad input mapping, and Gamemode wrappers automatically.
 > Landing page & install guide: **[https://naustudentx18.github.io/pokebonk-deck/](https://naustudentx18.github.io/pokebonk-deck/)**
 
@@ -86,12 +86,12 @@ What it sets up on the Deck:
 <details>
 <summary>Manual install</summary>
 
-1. Download `PokebonkDeck-1.0.9-x86_64.AppImage` from the [releases page](https://github.com/NaustudentX18/pokebonk-deck/releases).
+1. Download `PokebonkDeck-1.1.0-x86_64.AppImage` from the [releases page](https://github.com/NaustudentX18/pokebonk-deck/releases).
 2. Make it executable:
    ```bash
-   chmod +x ~/Downloads/PokebonkDeck-1.0.9-x86_64.AppImage
+   chmod +x ~/Downloads/PokebonkDeck-1.1.0-x86_64.AppImage
    mkdir -p ~/.local/share/pokebonk-deck
-   mv ~/Downloads/PokebonkDeck-1.0.9-x86_64.AppImage ~/.local/share/pokebonk-deck/
+   mv ~/Downloads/PokebonkDeck-1.1.0-x86_64.AppImage ~/.local/share/pokebonk-deck/
    ```
 3. In Steam: **Library → Add a Non-Steam Game** → browse to the AppImage. Set the launch
    option to `gamemoderun %command%`.
