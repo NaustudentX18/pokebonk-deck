@@ -273,6 +273,33 @@ async function runSelfTest() {
     out.checks.probeError = String(error.message || error)
   }
 
+  // The window's own state: on the Deck this is what decides whether the
+  // game is actually visible, not whether the page rendered.
+  try {
+    const bounds = win.getBounds()
+    out.checks.window = {
+      visible: win.isVisible(),
+      focused: win.isFocused(),
+      fullScreen: win.isFullScreen(),
+      bounds: `${bounds.width}x${bounds.height}+${bounds.x}+${bounds.y}`,
+      screen: `${win.getAllWindows().length} window(s)`
+    }
+  } catch (error) {
+    out.checks.window = { error: String(error.message || error) }
+  }
+
+  // Optional: capture what the app is showing.
+  const shotIndex = process.argv.indexOf('--screenshot')
+  if (shotIndex > -1 && process.argv[shotIndex + 1]) {
+    try {
+      const target = process.argv[shotIndex + 1]
+      fs.writeFileSync(target, (await win.webContents.capturePage()).toPNG())
+      out.checks.screenshot = target
+    } catch (error) {
+      out.checks.screenshot = `failed: ${error.message || error}`
+    }
+  }
+
   out.checks.electron = process.versions.electron
   out.checks.chrome = process.versions.chrome
   out.checks.upstream = await probeVersion()
