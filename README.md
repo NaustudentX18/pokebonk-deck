@@ -126,22 +126,22 @@ Two independent channels:
 
 The game's own defaults, read from the shipped build. The in-game remap screen still works.
 
-| Action | Keyboard | Controller |
+| Action | Keyboard | Controller & Steam Deck |
 |---|---|---|
 | Move | `W` `A` `S` `D` | Left stick / D-pad |
 | Jump | `Space` | A / Cross |
 | Dash (air dive) | `Shift` | B / Circle |
 | Interact | `E` | X / Square |
 | Ultimate | `R` | Y / Triangle |
-| Lock target | Middle mouse | Right trigger |
-| Auto aim | `Q` | Left trigger |
-| Auto-run | `T` | — |
-| Big map | `M` | — |
-| Auto ultimate | `Y` | — |
-| Pause | `P` | Start |
+| Lock target | Middle mouse | Right trigger (R2) |
+| Auto aim | `Q` | Left trigger (L2) |
+| Auto-run | `T` | Left stick click (L3) / L4 grip paddle |
+| Big map | `M` | Select / View button (Back) |
+| Auto ultimate | `Y` | Right stick click (R3) / R4 grip paddle |
+| Pause | `P` | Start / Menu |
 | Reroll upgrade | `F` | X / Square |
 | Skip upgrade | `X` | Y / Triangle |
-| Banish upgrade | `Z` | Right bumper |
+| Banish upgrade | `Z` | Right bumper (R1) |
 
 The game detects three controller layouts — `std`, `xlinux` and `generic`. The Steam Deck's
 controller lands on the `xlinux` path, which is the branch the game was built to handle.

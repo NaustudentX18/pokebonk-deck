@@ -35,7 +35,7 @@ The game polls `navigator.getGamepads()` every frame and detects three layouts.
 
 Default button map (standard-mapping indices):
 
-| Action | Index | Face button |
+| Action | Index | Face button / Steam Deck Input |
 |---|---|---|
 | Jump | 0 | A / Cross |
 | Dash | 1 | B / Circle |
@@ -43,6 +43,9 @@ Default button map (standard-mapping indices):
 | Ultimate | 3 | Y / Triangle |
 | Aim | 4 | Left bumper / L1 |
 | Lock target | 5 | Right bumper / R1 |
+| Big map | 8 | Select / View / Back |
+| Auto-run | 10 | Left stick click (L3) / L4 grip paddle |
+| Auto-ultimate | 11 | Right stick click (R3) / R4 grip paddle |
 
 Menu navigation maps `confirm` to 0 and `back` to 1, so A confirms and B goes back.
 
