@@ -8,18 +8,27 @@
 set -euo pipefail
 
 REPO="NaustudentX18/pokebonk-deck"
-TOOL_URL="https://github.com/$REPO/releases/latest/download/uninstall.py"
-TOOL="${TMPDIR:-/tmp}/pokebonk-deck-uninstall.py"
+BASE="https://github.com/$REPO/releases/latest/download"
+WORK="${TMPDIR:-/tmp}/pokebonk-deck-uninstall"
+UNINSTALLER="$WORK/uninstall.py"
 
 command -v python3 >/dev/null || {
   printf 'python3 is required\n' >&2
   exit 1
 }
 
-curl -fsSL -o "$TOOL" "$TOOL_URL" || {
+rm -rf "$WORK" && mkdir -p "$WORK"
+
+# uninstall.py imports steam_integration for the binary shortcuts.vdf reader,
+# so both have to sit in the same directory.
+curl -fsSL -o "$UNINSTALLER" "$BASE/uninstall.py" || {
   printf 'could not fetch the uninstaller\n' >&2
   exit 1
 }
+curl -fsSL -o "$WORK/steam_integration.py" "$BASE/steam_integration.py" || {
+  printf 'could not fetch the Steam helper\n' >&2
+  exit 1
+}
 
-python3 "$TOOL" "$@"
-rm -f "$TOOL"
+python3 "$UNINSTALLER" "$@"
+rm -rf "$WORK"
