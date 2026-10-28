@@ -56,7 +56,20 @@ site as a top-level document and puts a console-shaped shell around it.
 
 <sub>Video: <a href="site/media/gameplay.mp4">gameplay.mp4</a> · captured from the live game.</sub>
 
-## Install on Steam Deck
+## Install
+
+One command, on any x86-64 Linux — including the Steam Deck's Desktop Mode terminal:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/NaustudentX18/pokebonk-deck/main/install.sh | bash
+```
+
+That downloads the latest AppImage, verifies its sha512 against the published manifest,
+installs it to `~/.local/share/pokebonk-deck/pokebonk-deck.AppImage`, writes a `.desktop`
+entry and drops the launcher icon in place. Re-running it upgrades in place.
+
+<details>
+<summary>Manual install</summary>
 
 1. Download `PokebonkDeck-1.0.0-x86_64.AppImage` from the [releases page](https://github.com/NaustudentX18/pokebonk-deck/releases).
 2. Make it executable:
@@ -71,16 +84,17 @@ site as a top-level document and puts a console-shaped shell around it.
 > Keep the AppImage on internal storage. The self-updater replaces the file in place, and a
 > rename across filesystems (e.g. FAT32 on the microSD card) fails.
 
-<details>
-<summary>Desktop Linux</summary>
+</details>
 
-```bash
-chmod +x PokebonkDeck-1.0.0-x86_64.AppImage
-./PokebonkDeck-1.0.0-x86_64.AppImage
-```
+<details>
+<summary>Steam Deck notes</summary>
 
 SteamOS already ships every library the AppImage needs; the Chromium sandbox works through
 unprivileged user namespaces, so there is no `--no-sandbox` and no root.
+
+Add it to Steam as a non-Steam game with the launch option `gamemoderun %command%`, and use
+Steam Input's **Gamepad** action set — Steam Input cannot be disabled for the Deck's built-in
+controller, and Desktop Layout would send mouse/keyboard instead.
 
 </details>
 

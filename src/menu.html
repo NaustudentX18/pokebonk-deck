@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PokéBonk Deck</title>
+<link rel="stylesheet" href="menu.css">
+</head>
+<body>
+  <div class="menu">
+    <h1>PokéBonk Deck</h1>
+    <ul id="items"></ul>
+    <p class="hint">unofficial client · pokebonk.com</p>
+  </div>
+  <script>
+    const ITEMS = [
+      { id: 'resume', label: 'Resume', shortcut: 'Esc' },
+      { id: 'fullscreen', label: 'Toggle fullscreen', shortcut: 'F11' },
+      { id: 'reload', label: 'Reload game', shortcut: 'F5' },
+      { id: 'gamepad-status', label: 'Controller status', shortcut: 'F8' },
+      { id: 'quit', label: 'Quit', shortcut: 'Ctrl+Q' }
+    ]
+
+    const list = document.getElementById('items')
+    for (const item of ITEMS) {
+      const li = document.createElement('li')
+      const label = document.createElement('span')
+      label.textContent = item.label
+      const kbd = document.createElement('kbd')
+      kbd.textContent = item.shortcut
+      li.append(label, kbd)
+      li.addEventListener('click', () => console.log('deck-command:' + item.id))
+      list.append(li)
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') console.log('deck-command:resume')
+    })
+  </script>
+</body>
+</html>

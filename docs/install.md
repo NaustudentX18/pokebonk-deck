@@ -4,10 +4,22 @@ The client ships as a single AppImage. SteamOS 3 already contains every library 
 the Electron sandbox works through unprivileged user namespaces — so there is nothing to
 install, no `pacman`, no Flatpak, and no root.
 
+## One command (any x86-64 Linux)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/NaustudentX18/pokebonk-deck/main/install.sh | bash
+```
+
+Downloads the latest AppImage, verifies its sha512 against `latest-linux.yml`, installs it to
+`~/.local/share/pokebonk-deck/pokebonk-deck.AppImage`, writes
+`~/.local/share/applications/gg.pokebonk.deck.desktop` and installs the launcher icon.
+Re-running it upgrades in place.
+
 ## Steam Deck (SteamOS 3)
 
-1. Open the [releases page](https://github.com/NaustudentX18/pokebonk-deck/releases) on the
-   Deck's browser (or copy the file over via microSD, USB or SSH) and download
+1. Either run the installer above, or open the
+   [releases page](https://github.com/NaustudentX18/pokebonk-deck/releases) on the Deck's
+   browser (or copy the file over via microSD, USB or SSH) and download
    `PokebonkDeck-1.0.0-x86_64.AppImage`.
 2. In Desktop Mode, open a terminal and make it executable:
 

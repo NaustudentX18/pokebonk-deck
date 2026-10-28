@@ -72,7 +72,7 @@
     <figure class="hero-art">
       <div class="hero-shot">
         <img src="media/01-title.webp" alt="PokéBonk title screen as rendered inside the native client" width="1600" height="863" loading="eager">
-        <div class="float-chip top"><span class="dot"></span> Live game · build mvpt1dlr</div>
+        <div class="float-chip top"><span class="dot"></span> Live game · <span id="live-build">updating…</span></div>
         <div class="float-chip bottom">Electron 45 · Chromium 156</div>
       </div>
       <figcaption>Real capture of pokebonk.com running inside the client shell.</figcaption>
@@ -217,15 +217,18 @@
     <div class="steps">
       <div class="step">
         <div>
-          <h3>Download the AppImage</h3>
-          <p>Grab <code>PokebonkDeck-1.0.0-x86_64.AppImage</code> from the project's releases page
-          and copy it to the Deck (microSD, USB, or straight from a browser).</p>
+          <h3>Run the installer</h3>
+          <p>One command, in the Deck's Desktop Mode terminal. It downloads the AppImage,
+          verifies the sha512 against the published manifest, installs it and writes a
+          launcher entry.</p>
+          <pre><code>curl -fsSL https://raw.githubusercontent.com/NaustudentX18/pokebonk-deck/main/install.sh | bash</code></pre>
         </div>
       </div>
       <div class="step">
         <div>
-          <h3>Make it executable</h3>
-          <p>In the Deck's desktop mode terminal, or from any SSH shell on your network:</p>
+          <h3>Prefer to do it by hand?</h3>
+          <p>Download <code>PokebonkDeck-1.0.0-x86_64.AppImage</code> from the releases page and
+          put it somewhere writable:</p>
           <pre><code>chmod +x ~/Downloads/PokebonkDeck-1.0.0-x86_64.AppImage
 <span class="c"># optional: install it somewhere stable</span>
 mv ~/Downloads/PokebonkDeck-*.AppImage ~/.local/share/pokebonk-deck/</code></pre>
@@ -467,5 +470,19 @@ GET https://pokebonk.com/version.json
     </p>
   </div>
 </footer>
+<script>
+  // The live upstream build id. /version.json on pokebonk.com sends no CORS
+  // header, so the site mirrors it into data/version.json from CI.
+  fetch('data/version.json', { cache: 'no-cache' })
+    .then((r) => r.json())
+    .then((v) => {
+      const el = document.getElementById('live-build')
+      if (el) el.textContent = v.version ? `v${v.version} · ${v.build}` : v.build
+    })
+    .catch(() => {
+      const el = document.getElementById('live-build')
+      if (el) el.textContent = 'auto-updating'
+    })
+</script>
 </body>
 </html>

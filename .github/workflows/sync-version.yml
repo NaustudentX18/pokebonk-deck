@@ -1,0 +1,40 @@
+name: Sync upstream build
+
+# pokebonk.com ships often (v0.8.59 -> v0.8.62 in two days). The landing page
+# shows the live upstream build id, but /version.json sends no CORS header, so
+# the browser cannot fetch it. This job mirrors it into the site instead.
+
+on:
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [site/index.html, .github/workflows/sync-version.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch the current upstream build
+        run: |
+          mkdir -p site/data
+          curl -fsSL --retry 3 https://pokebonk.com/version.json -o site/data/version.json
+          cat site/data/version.json
+
+      - name: Commit if it changed
+        run: |
+          if git diff --quiet -- site/data/version.json; then
+            echo "upstream build unchanged"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/data/version.json
+          git commit -m "chore: sync upstream build id"
+          git push

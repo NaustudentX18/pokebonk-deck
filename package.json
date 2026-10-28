@@ -1,0 +1,48 @@
+{
+  "name": "pokebonk-deck",
+  "productName": "PokéBonk Deck",
+  "version": "1.0.0",
+  "description": "Unofficial native Linux client for the PokéBonk browser game — built for Steam Deck.",
+  "main": "src/main.js",
+  "desktopName": "gg.pokebonk.deck.desktop",
+  "license": "MIT",
+  "private": true,
+  "author": "forest",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/",
+    "build": "electron-builder --linux AppImage --publish never",
+    "build:publish": "electron-builder --linux AppImage --publish always",
+    "build:all": "electron-builder --linux AppImage dir --publish never"
+  },
+  "devDependencies": {
+    "electron": "45.0.0",
+    "electron-builder": "26.18.0",
+    "electron-updater": "6.8.12"
+  },
+  "build": {
+    "appId": "gg.pokebonk.deck",
+    "productName": "PokéBonk Deck",
+    "artifactName": "PokebonkDeck-${version}-${arch}.${ext}",
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Game",
+      "icon": "assets",
+      "executableName": "pokebonk-deck",
+      "synopsis": "Unofficial native client for PokéBonk",
+      "syncDesktopName": true,
+      "desktop": { "entry": { "StartupWMClass": "pokebonk-deck" } }
+    },
+    "toolsets": { "appimage": "1.0.3" },
+    "appImage": { "compression": "zstd" },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "NaustudentX18",
+        "repo": "pokebonk-deck",
+        "releaseType": "release"
+      }
+    ]
+  }
+}
