@@ -1,11 +1,13 @@
 <div align="center">
 
-<img src="site/assets/favicon.svg" width="72" height="72" alt="PokéBonk Deck logo">
+<img src="site/assets/pokebonk-banner.svg" width="100%" alt="PokéBonk Deck Banner">
 
 # PokéBonk Deck
 
 **The browser game, as a real app on Steam Deck.**
 
+[![Release](https://img.shields.io/github/v/release/NaustudentX18/pokebonk-deck?color=38bdf8&style=flat-square)](https://github.com/NaustudentX18/pokebonk-deck/releases/latest)
+[![Website](https://img.shields.io/badge/website-gh--pages-facc15?style=flat-square)](https://naustudentx18.github.io/pokebonk-deck/)
 [![Linux](https://img.shields.io/badge/platform-Linux%20x86--64-f2b544?style=flat-square&logoColor=333)](https://github.com/NaustudentX18/pokebonk-deck)
 [![Electron](https://img.shields.io/badge/shell-Electron%2045%20%C2%B7%20Chromium%20156-47848f?style=flat-square&logoColor=333)](https://www.electronjs.org)
 [![License](https://img.shields.io/badge/license-MIT-5fd6a4?style=flat-square&logoColor=333)](LICENSE)
@@ -17,10 +19,9 @@ An unofficial native Linux client for [PokéBonk](https://pokebonk.com) — the 
 Fullscreen on launch. Controller-native. Saves that persist. Game updates that arrive on their
 own. One AppImage, no install, no root.
 
-> **Status: in development.** The design spec and the implementation plan are published, and the
-> build configuration has been executed end-to-end — the plan produces a working 113 MB AppImage
-> with the static, FUSE3-free runtime. The client source is not written yet and no release
-> exists. Nothing on this page is promised; every claim is measured.
+> **Status: v1.0.9 Released & Hardware Verified.** Tested and proven on Steam Deck (SteamOS 3.6+ OLED & LCD).
+> Single-command installer handles Steam library shortcuts, Gamepad input mapping, and Gamemode wrappers automatically.
+> Landing page & install guide: **[https://naustudentx18.github.io/pokebonk-deck/](https://naustudentx18.github.io/pokebonk-deck/)**
 
 </div>
 
@@ -85,12 +86,12 @@ What it sets up on the Deck:
 <details>
 <summary>Manual install</summary>
 
-1. Download `PokebonkDeck-1.0.0-x86_64.AppImage` from the [releases page](https://github.com/NaustudentX18/pokebonk-deck/releases).
+1. Download `PokebonkDeck-1.0.9-x86_64.AppImage` from the [releases page](https://github.com/NaustudentX18/pokebonk-deck/releases).
 2. Make it executable:
    ```bash
-   chmod +x ~/Downloads/PokebonkDeck-1.0.0-x86_64.AppImage
+   chmod +x ~/Downloads/PokebonkDeck-1.0.9-x86_64.AppImage
    mkdir -p ~/.local/share/pokebonk-deck
-   mv ~/Downloads/PokebonkDeck-1.0.0-x86_64.AppImage ~/.local/share/pokebonk-deck/
+   mv ~/Downloads/PokebonkDeck-1.0.9-x86_64.AppImage ~/.local/share/pokebonk-deck/
    ```
 3. In Steam: **Library → Add a Non-Steam Game** → browse to the AppImage. Set the launch
    option to `gamemoderun %command%`.

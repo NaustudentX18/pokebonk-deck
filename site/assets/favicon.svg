@@ -1,11 +1,60 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
-  <rect width="48" height="48" rx="11" fill="#1e1638"/>
-  <circle cx="19" cy="21" r="7.5" fill="none" stroke="#f2b544" stroke-width="2.6"/>
-  <path d="M19 13.5v15" stroke="#f2b544" stroke-width="2.6" stroke-linecap="round"/>
-  <path d="M11.5 21h15" stroke="#f2b544" stroke-width="2.6" stroke-linecap="round" opacity=".55"/>
-  <rect x="27" y="27" width="13" height="13" rx="3.4" fill="#e94756"/>
-  <circle cx="31" cy="31.6" r="1.5" fill="#fff" opacity=".9"/>
-  <circle cx="36" cy="31.6" r="1.5" fill="#fff" opacity=".9"/>
-  <circle cx="31" cy="35.4" r="1.5" fill="#fff" opacity=".55"/>
-  <circle cx="36" cy="35.4" r="1.5" fill="#fff" opacity=".55"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <radialGradient id="pbRed" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#ff4b5c"/>
+      <stop offset="55%" stop-color="#e11d48"/>
+      <stop offset="100%" stop-color="#9f1239"/>
+    </radialGradient>
+    <radialGradient id="pbWhite" cx="35%" cy="65%" r="65%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="65%" stop-color="#f1f5f9"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </radialGradient>
+    <linearGradient id="pbMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#94a3b8"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+    <radialGradient id="pbGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="1"/>
+      <stop offset="60%" stop-color="#0284c7" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#0369a1" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="pbClip">
+      <circle cx="50" cy="50" r="46"/>
+    </clipPath>
+  </defs>
+
+  <!-- Outer Shadow & Base Rim -->
+  <circle cx="50" cy="50" r="48" fill="#11131a"/>
+
+  <!-- Spheres -->
+  <g clip-path="url(#pbClip)">
+    <!-- Top Half (Red) -->
+    <path d="M 4 50 A 46 46 0 0 1 96 50 Z" fill="url(#pbRed)"/>
+    <!-- Specular Highlight -->
+    <path d="M 14 42 C 18 24 34 11 52 11 C 58 11 64 12 70 15 C 64 14 56 13 48 15 C 32 17 19 28 14 42 Z" fill="#ffffff" opacity="0.45"/>
+    <ellipse cx="32" cy="22" rx="7" ry="3.5" transform="rotate(-30 32 22)" fill="#ffffff" opacity="0.4"/>
+
+    <!-- Bottom Half (White) -->
+    <path d="M 4 50 A 46 46 0 0 0 96 50 Z" fill="url(#pbWhite)"/>
+    <!-- Subtle Ambient Occlusion Under Equator -->
+    <path d="M 4 50 A 46 46 0 0 0 96 50 Q 50 58 4 50 Z" fill="#0f172a" opacity="0.15"/>
+
+    <!-- Dark Equator Band -->
+    <rect x="0" y="46.5" width="100" height="7" fill="#11131a"/>
+  </g>
+
+  <!-- Center Release Button Mechanism -->
+  <!-- Outer Dark Ring -->
+  <circle cx="50" cy="50" r="16" fill="#11131a"/>
+  <!-- Metallic Bevel -->
+  <circle cx="50" cy="50" r="12.5" fill="url(#pbMetal)"/>
+  <!-- Dark Groove -->
+  <circle cx="50" cy="50" r="10.5" fill="#0f172a"/>
+  <!-- Button Core -->
+  <circle cx="50" cy="50" r="8.5" fill="#ffffff"/>
+  <!-- Center Glow / Indicator -->
+  <circle cx="50" cy="50" r="5" fill="#f8fafc"/>
+  <circle cx="50" cy="50" r="3" fill="#38bdf8" opacity="0.85"/>
 </svg>

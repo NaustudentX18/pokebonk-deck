@@ -37,13 +37,13 @@ parsed and rewritten only if it is fully understood, and both are backed up.
 1. Either run the installer above, or open the
    [releases page](https://github.com/NaustudentX18/pokebonk-deck/releases) on the Deck's
    browser (or copy the file over via microSD, USB or SSH) and download
-   `PokebonkDeck-1.0.0-x86_64.AppImage`.
+   `PokebonkDeck-1.0.9-x86_64.AppImage`.
 2. In Desktop Mode, open a terminal and make it executable:
 
    ```bash
-   chmod +x ~/Downloads/PokebonkDeck-1.0.0-x86_64.AppImage
+   chmod +x ~/Downloads/PokebonkDeck-1.0.9-x86_64.AppImage
    mkdir -p ~/.local/share/pokebonk-deck
-   mv ~/Downloads/PokebonkDeck-1.0.0-x86_64.AppImage ~/.local/share/pokebonk-deck/
+   mv ~/Downloads/PokebonkDeck-1.0.9-x86_64.AppImage ~/.local/share/pokebonk-deck/
    ```
 
 3. In Steam, go to **Library → Add a Non-Steam Game → Browse**, and pick the AppImage.
@@ -78,8 +78,8 @@ If the controller does not appear at all, see [troubleshooting.md](troubleshooti
 ## Desktop Linux
 
 ```bash
-chmod +x PokebonkDeck-1.0.0-x86_64.AppImage
-./PokebonkDeck-1.0.0-x86_64.AppImage
+chmod +x PokebonkDeck-1.0.9-x86_64.AppImage
+./PokebonkDeck-1.0.9-x86_64.AppImage
 ```
 
 Any current x86-64 Linux with a working Mesa stack works. The AppImage bundles Electron and
@@ -101,7 +101,7 @@ which is expected in a source checkout.
 ## Verifying the download
 
 ```bash
-sha256sum PokebonkDeck-1.0.0-x86_64.AppImage
+sha256sum PokebonkDeck-1.0.9-x86_64.AppImage
 ```
 
 Compare against the checksum published in the release notes.

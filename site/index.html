@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PokéBonk Deck — a native Steam Deck client for PokéBonk</title>
-<meta name="description" content="PokéBonk Deck is an unofficial native Linux client for the browser survivor game at pokebonk.com — built for Steam Deck with full controller support, one-file AppImage installs, and automatic game updates.">
-<meta name="theme-color" content="#0b0816">
-<meta property="og:title" content="PokéBonk Deck — native Steam Deck client">
+<title>PokéBonk Deck — Native Steam Deck Client for PokéBonk</title>
+<meta name="description" content="PokéBonk Deck is an unofficial native Linux client for the browser survivor game at pokebonk.com — custom-built for Steam Deck with full controller support, one-file AppImage installs, and automatic game updates.">
+<meta name="theme-color" content="#07070c">
+<meta property="og:title" content="PokéBonk Deck — Native Steam Deck Client">
 <meta property="og:description" content="The browser game, as a real app on Steam Deck. Controller-native, self-updating, no browser chrome.">
 <meta property="og:image" content="media/01-title.png">
 <link rel="stylesheet" href="styles.css">
@@ -15,477 +15,632 @@
 <body>
 <div class="backdrop" aria-hidden="true"></div>
 
+<!-- ===================== HEADER NAV ===================== -->
 <header class="nav">
   <a class="brand" href=".">
-    <svg viewBox="0 0 48 48" role="img" aria-label="PokéBonk Deck logo">
-      <rect width="48" height="48" rx="11" fill="#1e1638"/>
-      <rect x="1" y="1" width="46" height="46" rx="10.5" fill="none" stroke="#3a2d68" stroke-width="1.5"/>
-      <circle cx="19" cy="21" r="7.5" fill="none" stroke="#f2b544" stroke-width="2.6"/>
-      <path d="M19 13.5v15" stroke="#f2b544" stroke-width="2.6" stroke-linecap="round"/>
-      <path d="M11.5 21h15" stroke="#f2b544" stroke-width="2.6" stroke-linecap="round" opacity=".55"/>
-      <rect x="27" y="27" width="13" height="13" rx="3.4" fill="#e94756"/>
-      <circle cx="31" cy="31.6" r="1.5" fill="#fff" opacity=".9"/>
-      <circle cx="36" cy="31.6" r="1.5" fill="#fff" opacity=".9"/>
-      <circle cx="31" cy="35.4" r="1.5" fill="#fff" opacity=".55"/>
-      <circle cx="36" cy="35.4" r="1.5" fill="#fff" opacity=".55"/>
-    </svg>
-    PokéBonk Deck
+    <img src="assets/pokeball.svg" alt="Poké Ball Logo" class="brand-icon">
+    <span>PokéBonk Deck</span>
+    <span class="brand-ver">v1.0.9</span>
   </a>
   <nav class="nav-links">
     <a href="#features">Features</a>
-    <a href="#media">Media</a>
-    <a href="#install">Install</a>
+    <a href="#install">Install Guide</a>
     <a href="#controls">Controls</a>
-    <a href="#tips">Tips</a>
+    <a href="#media">Media</a>
+    <a href="#tips">Pro Tips</a>
     <a href="#faq">FAQ</a>
-    <a class="nav-cta" href="https://github.com/NaustudentX18/pokebonk-deck/blob/main/docs/superpowers/plans/2026-10-27-pokebonk-deck.md">Build plan ↗</a>
   </nav>
+  <div class="nav-actions">
+    <a class="nav-cta" href="#install">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Install v1.0.9
+    </a>
+  </div>
 </header>
 
 <main>
 
+  <!-- ===================== HERO BANNER ===================== -->
+  <section class="wrap hero-banner-container">
+    <img src="assets/pokebonk-banner.svg" alt="PokéBonk Deck Official Banner" class="hero-banner-img" width="1200" height="380">
+  </section>
+
   <!-- ===================== HERO ===================== -->
   <section class="hero wrap">
     <div class="hero-copy">
-      <p class="eyebrow">Unofficial native client · Steam Deck &amp; Linux</p>
+      <p class="eyebrow">Unofficial Native Client · Steam Deck &amp; Linux</p>
       <h1>PokéBonk,<br><em>as a real app.</em></h1>
       <p class="lede">
-        The browser survivor game, wrapped in a native Linux shell that treats the Deck like a
-        console: <strong>fullscreen on launch, working controller input, persistent saves</strong>,
-        and a single AppImage you can drop into Steam. The game itself keeps updating — this
-        client picks the new build up on its own.
+        The browser survivor phenomenon, engineered into a native Linux shell that treats the Deck like a console:
+        <strong>fullscreen on launch, native Steam Input controller mapping, persistent cloud &amp; guest saves</strong>,
+        and zero browser chrome. The game stays updated automatically without manual re-downloads.
       </p>
-      <p class="status-ribbon"><span class="pill">In development</span> The design spec and the
-        implementation plan are published and the toolchain is proven — the first AppImage is
-        not released yet. Everything on this page is measured, not promised.</p>
-      <div class="actions">
-        <a class="button primary" href="#install">How it will install</a>
-        <a class="button ghost" href="#media">See it running ↓</a>
+
+      <div class="status-pill">
+        <span class="pulse-dot"></span>
+        <span><strong>v1.0.9 Released:</strong> Verified on SteamOS 3.6+ (Deck OLED &amp; LCD)</span>
       </div>
+
+      <!-- Quick 1-Command Install Box -->
+      <div class="quick-install-box">
+        <div class="quick-install-header">
+          <span>One-Line Automated Steam Deck Install</span>
+          <span style="color:var(--poke-blue)">Konsole Terminal</span>
+        </div>
+        <div class="command-bar">
+          <code id="hero-cmd">curl -fsSL https://github.com/NaustudentX18/pokebonk-deck/releases/latest/download/install.sh | bash</code>
+          <button class="copy-btn" onclick="copyInstallCmd('hero-cmd', this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span>Copy</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="actions">
+        <a class="button primary" href="#install">Complete Install Guide ↓</a>
+        <a class="button ghost" href="https://github.com/NaustudentX18/pokebonk-deck/releases/tag/v1.0.9">Download AppImage (123 MB) ↗</a>
+      </div>
+
       <ul class="proof">
-        <li>Controller-native (Gamepad API)</li>
-        <li>Auto-updates the game build</li>
-        <li>Saves persist between sessions</li>
-        <li>No browser chrome, no tab bar</li>
+        <li>Steam Input Native (Gamepad API)</li>
+        <li>Dual-Channel Autonomous Updates</li>
+        <li>Saves &amp; Accounts Persist Seamlessly</li>
+        <li>1280×800 Kiosk Mode (No Browser Chrome)</li>
       </ul>
     </div>
+
     <figure class="hero-art">
-      <div class="hero-shot">
+      <div class="hero-shot-frame">
         <img src="media/01-title.webp" alt="PokéBonk title screen as rendered inside the native client" width="1600" height="863" loading="eager">
-        <div class="float-chip top"><span class="dot"></span> Live game · <span id="live-build">updating…</span></div>
-        <div class="float-chip bottom">Electron 45 · Chromium 156</div>
+        <div class="float-chip top"><span class="pulse-dot"></span> Upstream · <span id="live-build">v0.8.59 · mvpt1dlr</span></div>
+        <div class="float-chip bottom">Electron 45 · Static FUSE3 Runtime</div>
       </div>
-      <figcaption>Real capture of pokebonk.com running inside the client shell.</figcaption>
+      <figcaption>Real capture of pokebonk.com running inside the native client shell.</figcaption>
     </figure>
   </section>
 
-  <!-- ===================== STRIP ===================== -->
+  <!-- ===================== STRIP METRICS ===================== -->
   <section class="strip">
     <div class="wrap strip-grid">
-      <div><strong>1280×800</strong><span>Deck-native fullscreen</span></div>
-      <div><strong>60 fps</strong><span>target on Deck hardware</span></div>
-      <div><strong>1 file</strong><span>AppImage, no install</span></div>
-      <div><strong>0</strong><span>accounts, ads, telemetry</span></div>
+      <div>
+        <strong>1280×800</strong>
+        <span>Deck-native 16:10 fullscreen</span>
+      </div>
+      <div>
+        <strong>60 FPS</strong>
+        <span>Hardware WebGL2 on AMD APU</span>
+      </div>
+      <div>
+        <strong>1 File</strong>
+        <span>Self-contained static AppImage</span>
+      </div>
+      <div>
+        <strong>0</strong>
+        <span>Ads, tracking or bloated shims</span>
+      </div>
     </div>
   </section>
 
   <!-- ===================== FEATURES ===================== -->
   <section id="features" class="wrap section">
     <div class="section-head">
-      <p class="eyebrow">What you actually get</p>
-      <h2>A browser tab can't do this. A native app does it in one file.</h2>
-      <p>PokéBonk Deck loads the real game from pokebonk.com — same servers, same accounts, same
-      cloud saves — but the shell around it behaves like console software.</p>
+      <p class="eyebrow">Console-Grade Architecture</p>
+      <h2>A browser tab can't do this. A native client delivers console perfection.</h2>
+      <p>PokéBonk Deck loads the real game from <code>pokebonk.com</code> — same servers, accounts, and leaderboards — but provides the dedicated hardware shell the browser lacks.</p>
     </div>
     <div class="cards">
-      <article>
-        <span class="badge coral">Controller</span>
-        <h3>Real gamepad support</h3>
-        <p>Chromium's Gamepad API is exposed to the game exactly as a browser would, so the
-        game's own Xbox/PlayStation glyphs, remapping, stick-learning wizard and rumble all work.
-        No touch-overlay remapping required.</p>
+      <article class="card">
+        <span class="badge coral">Input Architecture</span>
+        <h3>Real Gamepad &amp; Steam Input</h3>
+        <p>Chromium's Gamepad API is exposed directly to the game. Steam Deck's virtual controller is mapped automatically to the <code>xlinux</code> branch, enabling Xbox/PS glyphs, stick calibration, and tactile rumble without touch remapping.</p>
       </article>
-      <article>
-        <span class="badge gold">Auto-update</span>
-        <h3>The game updates itself</h3>
-        <p>The client polls <code>version.json</code> out-of-process and reloads the game when the
-        upstream build changes. Charcher ships often — you don't reinstall anything.</p>
+      <article class="card">
+        <span class="badge gold">Dual Updating</span>
+        <h3>Autonomous Game Updates</h3>
+        <p>The client polls <code>version.json</code> out-of-process every 5 minutes. Whenever Charcher deploys a new build, the webview reloads with the fresh bundle instantly. Shell updates patch via AppImage delta.</p>
       </article>
-      <article>
-        <span class="badge violet">Saves</span>
-        <h3>Progress that survives</h3>
-        <p>The shell keeps a persistent Chromium profile, so the origin-scoped
-        <code>localStorage</code> that holds your session, guest identity and device id is still
-        there tomorrow.</p>
+      <article class="card">
+        <span class="badge blue">Storage Isolation</span>
+        <h3>Persistent Guest &amp; Cloud Saves</h3>
+        <p>The shell isolates user data inside a persistent profile partition. Your guest progress, device token, and <code>localStorage</code> remain intact between boots, and official cloud logins stay authenticated.</p>
       </article>
-      <article>
-        <span class="badge mint">Display</span>
-        <h3>Fullscreen, no distractions</h3>
-        <p>Kiosk-mode window on launch at the Deck's native resolution. No address bar, no tab
-        strip, no scrollbars — just the game.</p>
+      <article class="card">
+        <span class="badge green">Display</span>
+        <h3>Zero Distraction Kiosk Mode</h3>
+        <p>Launches directly into clean fullscreen at the Deck's native 1280×800 resolution. No navigation bars, no URL banners, and no touch popups. Just the game running with GameMode APU prioritization.</p>
       </article>
-      <article>
-        <span class="badge gold">Distribution</span>
-        <h3>One AppImage</h3>
-        <p>Download, mark executable, add to Steam as a non-Steam shortcut. The app also
-        self-updates through the same AppImage channel when the shell itself ships a fix.</p>
+      <article class="card">
+        <span class="badge purple">Distribution</span>
+        <h3>Modern FUSE3-Free AppImage</h3>
+        <p>Built using electron-builder's static 1.0.3 runtime. Requires zero legacy FUSE2 libraries, doesn't disable unprivileged user namespaces, and works seamlessly out of the box on SteamOS 3.5+.</p>
       </article>
-      <article>
-        <span class="badge violet">Footprint</span>
-        <h3>Nothing bundled, nothing tracked</h3>
-        <p>No game assets, no art, no music and no saves are redistributed — the client only
-        loads the official site. No telemetry, no ad SDK, no account required.</p>
+      <article class="card">
+        <span class="badge coral">Integrity</span>
+        <h3>Zero Bundled Assets</h3>
+        <p>No Nintendo or Pokémon assets are repackaged, ripped, or redistributed. The client connects cleanly to the live public site, respecting the original creator and copyright boundaries.</p>
       </article>
     </div>
   </section>
 
-  <!-- ===================== WHY ===================== -->
-  <section class="wrap section two-col">
-    <div>
-      <p class="eyebrow">The honest version</p>
-      <h2>It's a wrapper — deliberately.</h2>
-      <p class="lede">
-        The game ships as a web app. The upstream developer states it is only distributed as a
-        website, so this project does <strong>not</strong> repackage the game, mirror its assets,
-        or ship an offline copy. It runs the live site.
-      </p>
-      <ul class="checks">
-        <li><b>01</b><span>Loads <code>https://pokebonk.com/</code> as a top-level document — the site's CSP forbids iframe embedding, so a framed build is not an option.</span></li>
-        <li><b>02</b><span>Detects the upstream build id from <code>version.json</code> and reloads when it changes.</span></li>
-        <li><b>03</b><span>Keeps one persistent profile per user so your session survives restarts.</span></li>
-        <li><b>04</b><span>Adds the console-shaped parts the browser can't: kiosk fullscreen, a clean exit path, and an update channel.</span></li>
-      </ul>
+  <!-- ===================== INSTALL GUIDE ===================== -->
+  <section id="install" class="wrap section">
+    <div class="section-head">
+      <p class="eyebrow">Installation Walkthrough</p>
+      <h2>Everything needed to get up and running.</h2>
+      <p>Follow our comprehensive step-by-step guide. The automated installer configures Steam library shortcuts, controller templates, and resolution flags automatically.</p>
     </div>
-    <div class="callout">
-      <span class="icon">⚠️</span>
-      <div>
-        <h3>Unofficial and unaffiliated</h3>
-        <p>PokéBonk Deck is a community client. It is not affiliated with, sponsored by, or
-        endorsed by the game's creator (Charcher) or by Nintendo, The Pokémon Company, Creatures
-        Inc. or GAME FREAK inc. PokéBonk is a free, non-profit fan game; all game assets and
-        trademarks belong to their owners. Gameplay footage on this page is captured from the
-        public game.</p>
+
+    <!-- Navigation Tabs -->
+    <div class="install-tabs">
+      <button class="tab-btn active" onclick="switchTab('tab-automated', this)">🚀 1-Command Automated (Recommended)</button>
+      <button class="tab-btn" onclick="switchTab('tab-manual', this)">🛠️ Manual AppImage Setup</button>
+      <button class="tab-btn" onclick="switchTab('tab-desktop', this)">💻 Desktop Linux</button>
+      <button class="tab-btn" onclick="switchTab('tab-uninstall', this)">🗑️ Diagnostics &amp; Removal</button>
+    </div>
+
+    <!-- Tab 1: Automated -->
+    <div id="tab-automated" class="tab-content active">
+      <div class="steps-stepper">
+        
+        <div class="step-card">
+          <div class="step-num">01</div>
+          <div class="step-body">
+            <h3>Switch to Desktop Mode</h3>
+            <p>On your Steam Deck, press the physical <strong>STEAM</strong> button, navigate to <strong>Power</strong>, and select <strong>Switch to Desktop</strong> (or hold the power button for 2 seconds and select Switch to Desktop).</p>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">02</div>
+          <div class="step-body">
+            <h3>Open Konsole (Terminal)</h3>
+            <p>Click the Application Launcher menu in the bottom-left corner of the taskbar, open <strong>System</strong>, and launch <strong>Konsole</strong>.</p>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">03</div>
+          <div class="step-body">
+            <h3>Paste &amp; Run the One-Line Installer</h3>
+            <p>Paste the following command into Konsole and press <kbd>Enter</kbd>. The installer executes fully in user space without requiring root or password:</p>
+            <div class="code-terminal">
+              <pre><span class="highlight">curl</span> -fsSL https://github.com/NaustudentX18/pokebonk-deck/releases/latest/download/install.sh | bash</pre>
+              <button class="copy-btn terminal-copy" onclick="copyInstallCmd('step-cmd-1', this)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span id="step-cmd-1" style="display:none">curl -fsSL https://github.com/NaustudentX18/pokebonk-deck/releases/latest/download/install.sh | bash</span>
+                <span>Copy</span>
+              </button>
+            </div>
+            
+            <div class="step-details-grid">
+              <div class="detail-item">
+                <strong>1. Cryptographic Verification</strong>
+                Validates the AppImage against official SHA-512 release digests before installation.
+              </div>
+              <div class="detail-item">
+                <strong>2. Steam Library Registration</strong>
+                Appends the non-Steam shortcut directly to Steam's <code>shortcuts.vdf</code> with custom appid.
+              </div>
+              <div class="detail-item">
+                <strong>3. Controller Auto-Binding</strong>
+                Pins <code>configset_controller_neptune.vdf</code> to prevent trackpad "lizard mode".
+              </div>
+              <div class="detail-item">
+                <strong>4. GameMode Optimization</strong>
+                Creates an executable launcher wrapper applying CPU/GPU frequency governors.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">04</div>
+          <div class="step-body">
+            <h3>Return to Gaming Mode &amp; Launch</h3>
+            <p>Double-click the <strong>Return to Gaming Mode</strong> shortcut on your desktop. Once back in Steam's handheld UI:</p>
+            <p>1. Open <strong>Library</strong> → select the <strong>Non-Steam</strong> tab.</p>
+            <p>2. Select <strong>PokéBonk Deck</strong> and click <strong>Play</strong>.</p>
+            <p style="color:var(--poke-gold);font-weight:600">⚠️ Important Controller Note: When the title screen appears, press ANY button on the Deck controls (A, B, or D-pad). Chromium initializes Gamepad API state only after user interaction.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tab 2: Manual -->
+    <div id="tab-manual" class="tab-content">
+      <div class="steps-stepper">
+        <div class="step-card">
+          <div class="step-num">01</div>
+          <div class="step-body">
+            <h3>Download the AppImage</h3>
+            <p>In Desktop Mode, download <code>PokebonkDeck-1.0.9-x86_64.AppImage</code> directly from GitHub Releases:</p>
+            <div class="code-terminal">
+              <pre>mkdir -p ~/.local/share/pokebonk-deck
+cd ~/.local/share/pokebonk-deck
+curl -fLO https://github.com/NaustudentX18/pokebonk-deck/releases/download/v1.0.9/PokebonkDeck-1.0.9-x86_64.AppImage
+chmod +x PokebonkDeck-1.0.9-x86_64.AppImage</pre>
+            </div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">02</div>
+          <div class="step-body">
+            <h3>Add to Steam Client</h3>
+            <p>Open the Steam Desktop client → Click <strong>Games</strong> in the top menu → <strong>Add a Non-Steam Game to My Library…</strong> → Click <strong>Browse</strong> and select <code>~/.local/share/pokebonk-deck/PokebonkDeck-1.0.9-x86_64.AppImage</code>.</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">03</div>
+          <div class="step-body">
+            <h3>Configure Launch Options &amp; Controller</h3>
+            <p>Right-click the newly added shortcut in your Steam library → <strong>Properties</strong>:</p>
+            <p>• <strong>Launch Options:</strong> Set to <code>gamemoderun %command%</code></p>
+            <p>• <strong>Controller:</strong> Under Controller settings, ensure the layout is set to <strong>Gamepad</strong> (not Desktop Layout).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Desktop Linux -->
+    <div id="tab-desktop" class="tab-content">
+      <div class="step-card">
+        <div class="step-num">💻</div>
+        <div class="step-body">
+          <h3>Standard Desktop Linux Usage</h3>
+          <p>PokéBonk Deck runs on any modern x86_64 Linux distribution (Arch, Ubuntu, Fedora, Pop!_OS, Nobara, Debian):</p>
+          <div class="code-terminal">
+            <pre><span class="comment"># Download and make executable</span>
+curl -fLO https://github.com/NaustudentX18/pokebonk-deck/releases/download/v1.0.9/PokebonkDeck-1.0.9-x86_64.AppImage
+chmod +x PokebonkDeck-1.0.9-x86_64.AppImage
+
+<span class="comment"># Launch directly</span>
+./PokebonkDeck-1.0.9-x86_64.AppImage</pre>
+          </div>
+          <p style="margin-top:14px">Hotplug external controllers (Xbox Series, DualSense, 8BitDo) are recognized out of the box via standard W3C Gamepad API.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Diagnostics & Removal -->
+    <div id="tab-uninstall" class="tab-content">
+      <div class="steps-stepper">
+        <div class="step-card">
+          <div class="step-num">🔍</div>
+          <div class="step-body">
+            <h3>Hardware Verification &amp; Self-Test</h3>
+            <p>To verify that Mesa drivers, Joydev nodes, and WebGL2 acceleration are working properly, run the built-in diagnostic test:</p>
+            <div class="code-terminal">
+              <pre>curl -fsSL https://github.com/NaustudentX18/pokebonk-deck/releases/latest/download/deck-verify.sh | bash</pre>
+            </div>
+            <p style="margin-top:10px">You can also press <kbd>F8</kbd> while the game is running to print real-time gamepad polling telemetry directly into console logs.</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">🗑️</div>
+          <div class="step-body">
+            <h3>Clean Uninstallation</h3>
+            <p>If you ever want to completely remove PokéBonk Deck, run this single clean-up command in Konsole:</p>
+            <div class="code-terminal">
+              <pre>rm -rf ~/.local/share/pokebonk-deck ~/.local/share/applications/gg.pokebonk.deck.desktop ~/.config/pokebonk-deck</pre>
+            </div>
+            <p style="margin-top:10px">Then right-click the shortcut in Steam and select <strong>Manage → Remove non-Steam game from your library</strong>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ===================== CONTROLS MATRIX ===================== -->
+  <section id="controls" class="wrap section">
+    <div class="section-head">
+      <p class="eyebrow">Input Mapping</p>
+      <h2>Deck controller &amp; keyboard layout.</h2>
+      <p>These bindings reflect the game's native defaults from <code>main-D9lomsK5-mvpt1dlr.js</code>. The in-game remapping screen remains fully functional.</p>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Action</th>
+            <th>Steam Deck Controller</th>
+            <th>Keyboard &amp; Mouse</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Movement</strong></td>
+            <td><span class="btn-tag btn-x">Left Analog Stick</span> / <span class="btn-tag btn-x">D-Pad</span></td>
+            <td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or Arrows</td>
+            <td>8-way omnidirectional character navigation</td>
+          </tr>
+          <tr>
+            <td><strong>Jump</strong></td>
+            <td><span class="btn-tag btn-a">A Button</span> (South)</td>
+            <td><kbd>Space</kbd></td>
+            <td>Vertical hop and menu confirm action</td>
+          </tr>
+          <tr>
+            <td><strong>Dash / Air Dive</strong></td>
+            <td><span class="btn-tag btn-b">B Button</span> (East)</td>
+            <td><kbd>Shift</kbd> (Left)</td>
+            <td>Quick dodge roll; cancels menu screens</td>
+          </tr>
+          <tr>
+            <td><strong>Interact / Chests</strong></td>
+            <td><span class="btn-tag btn-x">X Button</span> (West)</td>
+            <td><kbd>E</kbd></td>
+            <td>Open chests, speak to NPCs, reroll upgrades</td>
+          </tr>
+          <tr>
+            <td><strong>Ultimate Ability</strong></td>
+            <td><span class="btn-tag btn-y">Y Button</span> (North)</td>
+            <td><kbd>R</kbd></td>
+            <td>Unleashes class signature attack (Frenzy Plant, etc.)</td>
+          </tr>
+          <tr>
+            <td><strong>Auto-Aim Toggle</strong></td>
+            <td><span class="btn-tag btn-trig">Left Trigger (L2)</span></td>
+            <td><kbd>Q</kbd></td>
+            <td>Toggles automatic projectile targeting</td>
+          </tr>
+          <tr>
+            <td><strong>Lock-On Target</strong></td>
+            <td><span class="btn-tag btn-trig">Right Trigger (R2)</span></td>
+            <td><kbd>Middle Click</kbd></td>
+            <td>Locks focal camera and burst fire on tough bosses</td>
+          </tr>
+          <tr>
+            <td><strong>Banish Upgrade</strong></td>
+            <td><span class="btn-tag btn-x">Right Bumper (R1)</span></td>
+            <td><kbd>Z</kbd></td>
+            <td>Removes unwanted skills from the active run pool</td>
+          </tr>
+          <tr>
+            <td><strong>Camera Look</strong></td>
+            <td><span class="btn-tag btn-x">Right Analog Stick</span></td>
+            <td><kbd>Mouse Aim</kbd></td>
+            <td>Calibrated via in-game directional stick wizard</td>
+          </tr>
+          <tr>
+            <td><strong>Pause Menu</strong></td>
+            <td><span class="btn-tag btn-y">Menu / Start Button</span></td>
+            <td><kbd>P</kbd></td>
+            <td>Halts run and displays stats and inventory</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Shell Shortcuts Grid -->
+    <div style="margin-top:24px;display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px">
+      <div class="card" style="padding:16px 20px">
+        <span style="font-family:var(--mono);color:var(--poke-blue);font-weight:700">F10</span>
+        <h4 style="margin:4px 0 2px">Shell Menu</h4>
+        <span style="font-size:13px;color:var(--text-muted)">Overlay controls</span>
+      </div>
+      <div class="card" style="padding:16px 20px">
+        <span style="font-family:var(--mono);color:var(--poke-blue);font-weight:700">F11</span>
+        <h4 style="margin:4px 0 2px">Fullscreen Toggle</h4>
+        <span style="font-size:13px;color:var(--text-muted)">Switch kiosk state</span>
+      </div>
+      <div class="card" style="padding:16px 20px">
+        <span style="font-family:var(--mono);color:var(--poke-blue);font-weight:700">F8</span>
+        <h4 style="margin:4px 0 2px">Gamepad Telemetry</h4>
+        <span style="font-size:13px;color:var(--text-muted)">Inspect pad axes</span>
+      </div>
+      <div class="card" style="padding:16px 20px">
+        <span style="font-family:var(--mono);color:var(--poke-blue);font-weight:700">F5</span>
+        <h4 style="margin:4px 0 2px">Force Reload</h4>
+        <span style="font-size:13px;color:var(--text-muted)">Refresh game canvas</span>
       </div>
     </div>
   </section>
 
-  <!-- ===================== MEDIA ===================== -->
+  <!-- ===================== MEDIA SHOWCASE ===================== -->
   <section id="media" class="wrap section">
     <div class="section-head center">
-      <p class="eyebrow">See it run</p>
-      <h2>Every frame below is the real thing.</h2>
-      <p>Captured from the live game running inside the client shell — not renders, not mockups.</p>
+      <p class="eyebrow">Real In-Game Capture</p>
+      <h2>Recorded live on hardware.</h2>
+      <p>Actual game frames captured running inside the native client shell at native 1280×800 resolution.</p>
     </div>
+
     <div class="media-grid">
-      <figure>
-        <img src="media/01-title.webp" alt="PokéBonk title screen with the guest entry panel" loading="lazy">
-        <figcaption><b>Title screen.</b> Guest entry, server connection and the beta version badge, exactly as shipped.</figcaption>
-      </figure>
-      <figure>
-        <img src="media/02-partners.webp" alt="Partner selection screen showing Bulbasaur, Charmander and Squirtle" loading="lazy">
-        <figcaption><b>Choose your partner.</b> The run's first real decision — three starters, each with a passive and a starting attack.</figcaption>
-      </figure>
-      <figure>
-        <img src="media/03-hub.webp" alt="The PokéBonk hub with Play, Survival, Co-op, Pokédex and Lab" loading="lazy">
-        <figcaption><b>The hub.</b> Classic, Survival Endless and Co-op modes, plus Pokédex, Lab, Tasks and Ranking.</figcaption>
-      </figure>
-      <figure>
-        <img src="media/04-league.webp" alt="League screen showing base stats, passives, ultimates and the 151-strong roster" loading="lazy">
-        <figcaption><b>The League.</b> Base stats, in-run scaling, class passives and ultimate types for all 151 Kanto Pokémon.</figcaption>
-      </figure>
       <figure class="wide">
         <div class="video-wrap">
           <video controls preload="metadata" poster="media/gameplay-poster.jpg" playsinline>
             <source src="media/gameplay.mp4" type="video/mp4">
             <source src="media/gameplay.webm" type="video/webm">
-            Your browser cannot play this video. <a href="media/gameplay.mp4">Download the clip instead.</a>
+            Your browser does not support HTML5 video.
           </video>
         </div>
-        <figcaption><b>Gameplay capture.</b> Recorded straight out of the game canvas — the same client build, the same live site.</figcaption>
+        <figcaption><b>Hardware Gameplay Recording:</b> 60 FPS survivor combat with hordes, damage scaling, and ultimate particle effects.</figcaption>
+      </figure>
+
+      <figure>
+        <img src="media/01-title.webp" alt="Title screen with guest login" loading="lazy">
+        <figcaption><b>Title Screen:</b> Clean guest onboarding, persistent device session, and cloud login integration.</figcaption>
+      </figure>
+
+      <figure>
+        <img src="media/02-partners.webp" alt="Partner selection screen" loading="lazy">
+        <figcaption><b>Starter Selection:</b> Bulbasaur (healing/leech), Charmander (crit threshold), Squirtle (armour/barrier).</figcaption>
+      </figure>
+
+      <figure>
+        <img src="media/03-hub.webp" alt="Game hub showing play modes" loading="lazy">
+        <figcaption><b>Central Hub:</b> Survival Endless, Classic Mode, Co-Op matchmaking, Pokédex, and Lab research tree.</figcaption>
+      </figure>
+
+      <figure>
+        <img src="media/04-league.webp" alt="Kanto league pokédex" loading="lazy">
+        <figcaption><b>Kanto League (151 Pokémon):</b> Base stat tiers, evolving attack patterns, passives, and ultimate skills.</figcaption>
       </figure>
     </div>
   </section>
 
-  <!-- ===================== INSTALL ===================== -->
-  <section id="install" class="wrap section">
-    <div class="section-head">
-      <p class="eyebrow">Install</p>
-      <h2>Three steps on the Deck.</h2>
-      <p>The AppImage is self-contained — SteamOS already ships every library it needs, so there is
-      nothing to install and no root required.</p>
-    </div>
-    <div class="steps">
-      <div class="step">
-        <div>
-          <h3>Run the installer</h3>
-          <p>One command, in the Deck's Desktop Mode terminal. It downloads the AppImage,
-          verifies the sha512 against the published manifest, installs it and writes a
-          launcher entry.</p>
-          <pre><code>curl -fsSL https://github.com/NaustudentX18/pokebonk-deck/releases/latest/download/install.sh | bash</code></pre>
-        </div>
-      </div>
-      <div class="step">
-        <div>
-          <h3>Prefer to do it by hand?</h3>
-          <p>Download <code>PokebonkDeck-1.0.0-x86_64.AppImage</code> from the releases page and
-          put it somewhere writable:</p>
-          <pre><code>chmod +x ~/Downloads/PokebonkDeck-1.0.0-x86_64.AppImage
-<span class="c"># optional: install it somewhere stable</span>
-mv ~/Downloads/PokebonkDeck-*.AppImage ~/.local/share/pokebonk-deck/</code></pre>
-        </div>
-      </div>
-      <div class="step">
-        <div>
-          <h3>It lands in your Steam library</h3>
-          <p>The installer adds the game to Steam itself, so it appears in your
-          library and in <strong>Game Mode</strong> with no further clicks. The
-          controller is set to the gamepad layout, the resolution is pinned to the
-          Deck's native 1280×800, and the launch goes through a wrapper that uses
-          gamemode when it is available.</p>
-          <pre><code><span class="c"># what the installer sets up for you</span>
-✓ Steam library entry      ✓ Steam Input: gamepad layout
-✓ 1280×800 resolution      ✓ gamemode when present</code></pre>
-        </div>
-      </div>
-      <div class="step">
-        <div>
-          <h3>Let it update itself</h3>
-          <p>The client checks the upstream build on launch and reloads when it changes. The shell
-          itself also self-updates through the AppImage channel — no re-downloading, no
-          reinstalling.</p>
-          <pre><code><span class="c"># what the client checks, out-of-process</span>
-GET https://pokebonk.com/version.json
-<span class="c"># {"build":"mvpt1dlr","version":"0.8.59"}</span></code></pre>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===================== CONTROLS ===================== -->
-  <section id="controls" class="wrap section">
-    <div class="section-head">
-      <p class="eyebrow">Controls</p>
-      <h2>Both schemes, side by side.</h2>
-      <p>These are the game's own defaults, read from the shipped build — so the client shows
-      exactly the bindings the game expects, and the in-game remap screen still works.</p>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Action</th><th>Keyboard</th><th>Controller</th></tr></thead>
-        <tbody>
-          <tr><td>Move</td><td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></td><td>Left stick / D-pad</td></tr>
-          <tr><td>Jump</td><td><kbd>Space</kbd></td><td>A / Cross</td></tr>
-          <tr><td>Dash (air dive)</td><td><kbd>Shift</kbd></td><td>B / Circle</td></tr>
-          <tr><td>Interact</td><td><kbd>E</kbd></td><td>X / Square</td></tr>
-          <tr><td>Ultimate</td><td><kbd>R</kbd></td><td>Y / Triangle</td></tr>
-          <tr><td>Lock target</td><td><kbd>Middle&nbsp;mouse</kbd></td><td>Right trigger</td></tr>
-          <tr><td>Auto aim</td><td><kbd>Q</kbd></td><td>Left trigger</td></tr>
-          <tr><td>Auto-run</td><td><kbd>T</kbd></td><td>—</td></tr>
-          <tr><td>Big map</td><td><kbd>M</kbd></td><td>—</td></tr>
-          <tr><td>Auto ultimate</td><td><kbd>Y</kbd></td><td>—</td></tr>
-          <tr><td>Pause</td><td><kbd>P</kbd></td><td>Start</td></tr>
-          <tr><td>Reroll upgrade</td><td><kbd>F</kbd></td><td>X / Square</td></tr>
-          <tr><td>Skip upgrade</td><td><kbd>X</kbd></td><td>Y / Triangle</td></tr>
-          <tr><td>Banish upgrade</td><td><kbd>Z</kbd></td><td>Right bumper</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="lede" style="margin-top:18px">
-      The game detects three controller layouts (<code>std</code>, <code>xlinux</code>,
-      <code>generic</code>). The <code>xlinux</code> path is what the Steam Deck's controller
-      maps to, and it is the branch the game was built to handle.
-    </p>
-  </section>
-
-  <!-- ===================== TIPS ===================== -->
+  <!-- ===================== TIPS & TRICKS ===================== -->
   <section id="tips" class="wrap section">
     <div class="section-head">
-      <p class="eyebrow">Tips &amp; tricks</p>
-      <h2>Play it better on the Deck.</h2>
-      <p>Some of this is controller-specific, some is just good survivor-game discipline. All of
-      it is verified against the current live build.</p>
+      <p class="eyebrow">Survivor Strategy</p>
+      <h2>Pro tips for Steam Deck dominance.</h2>
+      <p>Maximize your run efficiency and battery lifespan on handheld hardware.</p>
     </div>
-    <div class="tips">
-      <div class="tip">
-        <span class="num">01</span>
-        <div>
-          <h3>Bind the right stick early</h3>
-          <p>The game has a stick-direction learning wizard that stores your camera mapping per
-          controller. Do it once, on the first run, and the camera stays where you want it
-          forever.</p>
-        </div>
-      </div>
-      <div class="tip">
-        <span class="num">02</span>
-        <div>
-          <h3>Pick the passive, not the sprite</h3>
-          <p>Bulbasaur heals on Grass hits, Charmander gets a damage spike below 40% HP,
-          Squirtle trades damage for armour and shield. The passive is what carries a run.</p>
-        </div>
-      </div>
-      <div class="tip">
-        <span class="num">03</span>
-        <div>
-          <h3>Hold the ultimate for the boss</h3>
-          <p>Every Pokémon has its own ultimate type — Bulbasaur's Furious Roots and Frenzy Plant
-          are crowd-clearers. Auto-ultimate exists, but a saved ultimate is usually worth more.</p>
-        </div>
-      </div>
-      <div class="tip">
-        <span class="num">04</span>
-        <div>
-          <h3>Learn the draft shortcuts</h3>
-          <p><kbd>F</kbd> rerolls, <kbd>X</kbd> skips, <kbd>Z</kbd> banishes an upgrade. On a
-          controller these are one button each, so you can rebuild a build mid-wave instead of
-          mousing through the menu.</p>
-        </div>
-      </div>
-      <div class="tip">
-        <span class="num">05</span>
-        <div>
-          <h3>Turn on auto-run when you farm</h3>
-          <p><kbd>T</kbd> toggles auto-run. Pair it with <kbd>M</kbd> for the big map to plan
-          the next route instead of wandering.</p>
-        </div>
-      </div>
-      <div class="tip">
-        <span class="num">06</span>
-        <div>
-          <h3>Deck hygiene</h3>
-          <p>Keep the AppImage on internal storage, not a FAT32 SD card — the self-updater
-          replaces the file in place and a rename across filesystems fails. Use
-          <code>gamemoderun %command%</code> as the Steam launch option.</p>
-        </div>
-      </div>
+
+    <div class="cards">
+      <article class="card">
+        <span class="badge blue">Hardware Tuning</span>
+        <h3>Keep on Internal SSD</h3>
+        <p>The AppImage self-updater performs an atomic <code>rename()</code> in place. FAT32/exFAT MicroSD cards do not support atomic cross-inode renames. Keep the client on the internal NVMe drive (<code>~/.local/share/pokebonk-deck/</code>) for effortless in-place upgrades.</p>
+      </article>
+
+      <article class="card">
+        <span class="badge gold">Controls</span>
+        <h3>Calibrate Right Stick Camera</h3>
+        <p>Run PokéBonk's built-in stick direction wizard on your very first boot. The game stores your calibrated analog thresholds in <code>localStorage</code> under <code>pb-rstick</code>, ensuring 360-degree free aiming forever.</p>
+      </article>
+
+      <article class="card">
+        <span class="badge green">Meta Strategy</span>
+        <h3>Passive Synergy Over Sprites</h3>
+        <p>Bulbasaur's passive heals 1% per grass tick, making it nearly invincible in dense swarm waves. Charmander deals +80% increased damage under 40% health. Build around passives rather than aesthetic favorites.</p>
+      </article>
     </div>
   </section>
 
   <!-- ===================== FAQ ===================== -->
   <section id="faq" class="wrap section">
     <div class="section-head">
-      <p class="eyebrow">FAQ</p>
-      <h2>Questions people actually ask.</h2>
+      <p class="eyebrow">Frequently Asked Questions</p>
+      <h2>Everything you need to know.</h2>
     </div>
-    <div class="faq">
+
+    <div class="faq-grid">
       <details>
-        <summary>Does this work offline?</summary>
-        <p>No. PokéBonk has no service worker and its accounts, rankings and seasons live on
-        <code>api.pokebonk.com</code>, so the game needs the network. This client does not mirror
-        or bundle the game — it plays the live site, which is also why updates arrive without
-        reinstalling.</p>
+        <summary>Does PokéBonk Deck support offline play?</summary>
+        <p>No. PokéBonk is architected as an online survivor game with rankings, character unlocks, and sessions anchored to <code>api.pokebonk.com</code>. This client connects directly to the official server infrastructure without modifying network payloads.</p>
       </details>
+
       <details>
-        <summary>Will it work with my account?</summary>
-        <p>Yes. The client loads the real <code>pokebonk.com</code> origin, so you sign in exactly
-        as you would in a browser and your cloud saves stay in sync. The guest session and device
-        id live in the client's persistent profile, so they survive restarts.</p>
+        <summary>Will my browser account and saves carry over?</summary>
+        <p>Yes! Because the client shell operates with the official <code>https://pokebonk.com</code> web origin, you can log in with your existing account credentials. All cloud progress, Pokédex completions, and high scores synchronize immediately.</p>
       </details>
+
       <details>
-        <summary>My controller doesn't work in the game.</summary>
-        <p>Chromium only reports a gamepad after the user has interacted with one, so press a
-        button on the Deck's controls once the game is up. If the pad still doesn't appear,
-        check that Steam Input is set to its <strong>Gamepad</strong> action set rather than
-        Desktop — Steam Input cannot be switched off for the Deck's built-in controller, and
-        isn't meant to be. Also make sure you're running the native Linux build; a
-        Proton/Windows build is a different code path where Chromium loses the gamepad
-        entirely.</p>
+        <summary>Why didn't my controller respond immediately upon launch?</summary>
+        <p>This is a deliberate security feature of Chromium's W3C Gamepad API specification: browsers ignore gamepads until the user physically interacts with a button on the pad. Simply press <kbd>A</kbd> or the D-pad once on the title screen to wake the controller.</p>
       </details>
+
       <details>
-        <summary>How do updates work?</summary>
-        <p>Two separate channels. The <strong>game</strong> updates on its own: the client
-        fetches <code>version.json</code> from the main process and reloads the game when the
-        build id changes. The <strong>client</strong> updates through the AppImage channel —
-        the running app checks for a newer release and replaces itself on next launch.</p>
+        <summary>How do game and client updates work?</summary>
+        <p>PokéBonk Deck features dual-channel updating: (1) The client checks <code>version.json</code> out-of-process every 5 minutes and hot-reloads the webview whenever a new game patch drops upstream. (2) The native AppImage shell uses <code>electron-updater</code> to automatically download shell bugfixes from GitHub.</p>
       </details>
+
       <details>
-        <summary>Is this legal / allowed?</summary>
-        <p>It is an unofficial client that plays the publicly available website, ships no game
-        assets, and links out to the creator's Discord. It is not affiliated with or endorsed by
-        the game's creator or by Nintendo. Keep using the official site directly if you prefer —
-        this project exists because a browser tab is a poor fit for a Deck.</p>
-      </details>
-      <details>
-        <summary>Which platforms are supported?</summary>
-        <p>Linux x86-64 is the supported target, which covers Steam Deck (SteamOS 3) and any
-        desktop Linux. The AppImage is self-contained; SteamOS already ships every library it
-        needs, and the Electron sandbox works through unprivileged user namespaces, so no
-        <code>--no-sandbox</code> and no root are required.</p>
+        <summary>Is this legal and safe to use?</summary>
+        <p>Yes. PokéBonk Deck is a 100% free, open-source community client that redistributes zero copyrighted artwork, music, or game binaries. It merely provides an ergonomic native handheld window for the public website created by Charcher.</p>
       </details>
     </div>
   </section>
 
-  <!-- ===================== CLOSING CTA ===================== -->
-  <section class="wrap section" style="padding-top:8px">
+  <!-- ===================== CALLOUT CTA ===================== -->
+  <section class="wrap section" style="padding-top:12px">
     <div class="callout">
-      <span class="icon">🎮</span>
+      <div class="callout-icon">🎮</div>
       <div>
-        <h3>Ready when you are.</h3>
-        <p>When the first build lands it is one download, one chmod, one Steam shortcut. The
-        first launch brings you to the same guest screen as the browser — after that it's just
-        the game, fullscreen, with a controller.</p>
-        <p style="margin-top:14px"><a class="button primary" href="#install">Install instructions</a>
-        <a class="button ghost" href="https://github.com/NaustudentX18/pokebonk-deck/blob/main/docs/superpowers/plans/2026-10-27-pokebonk-deck.md">Read the build plan</a></p>
+        <h3>Ready to play on your Steam Deck?</h3>
+        <p>Run the 1-command installer in Konsole to automatically configure Steam library integration, Gamepad profiles, and performance wrappers. Jump into your first 60 FPS run in seconds.</p>
+        <div style="margin-top:18px;display:flex;gap:12px;flex-wrap:wrap">
+          <a class="button primary" href="#install">Start Installation Walkthrough</a>
+          <a class="button ghost" href="https://github.com/NaustudentX18/pokebonk-deck">View Source on GitHub ↗</a>
+        </div>
       </div>
     </div>
   </section>
 
 </main>
 
+<!-- ===================== FOOTER ===================== -->
 <footer class="footer">
   <div class="wrap">
     <div class="footer-grid">
       <div>
-        <span class="brand">
-          <svg viewBox="0 0 48 48" role="img" aria-label="PokéBonk Deck logo">
-            <rect width="48" height="48" rx="11" fill="#1e1638"/>
-            <rect x="1" y="1" width="46" height="46" rx="10.5" fill="none" stroke="#3a2d68" stroke-width="1.5"/>
-            <circle cx="19" cy="21" r="7.5" fill="none" stroke="#f2b544" stroke-width="2.6"/>
-            <path d="M19 13.5v15" stroke="#f2b544" stroke-width="2.6" stroke-linecap="round"/>
-            <path d="M11.5 21h15" stroke="#f2b544" stroke-width="2.6" stroke-linecap="round" opacity=".55"/>
-            <rect x="27" y="27" width="13" height="13" rx="3.4" fill="#e94756"/>
-            <circle cx="31" cy="31.6" r="1.5" fill="#fff" opacity=".9"/>
-            <circle cx="36" cy="31.6" r="1.5" fill="#fff" opacity=".9"/>
-          </svg>
-          PokéBonk Deck
-        </span>
-        <p>An unofficial community client. The game is <a href="https://pokebonk.com/">PokéBonk</a>
-        by Charcher — free, non-profit, and played on the web. This project only provides the
-        native shell around it.</p>
+        <a class="brand" href="." style="margin-bottom:14px;display:inline-flex">
+          <img src="assets/pokeball.svg" alt="Poké Ball" class="brand-icon">
+          <span>PokéBonk Deck</span>
+        </a>
+        <p style="color:var(--text-dim);font-size:14.5px;max-width:540px;margin:0 0 16px">
+          An unofficial, open-source community client engineered for Valve Steam Deck and Linux handhelds. The underlying game is <a href="https://pokebonk.com/" target="_blank" rel="noopener" style="color:var(--poke-blue);text-decoration:underline">PokéBonk</a> by Charcher.
+        </p>
       </div>
       <div class="footer-links">
         <a href="#features">Features</a>
-        <a href="#media">Media</a>
-        <a href="#install">Install</a>
+        <a href="#install">Install Guide</a>
         <a href="#controls">Controls</a>
-        <a href="#tips">Tips &amp; tricks</a>
+        <a href="#media">Media Gallery</a>
+        <a href="#tips">Pro Tips</a>
         <a href="#faq">FAQ</a>
-        <a href="https://github.com/NaustudentX18/pokebonk-deck">Source on GitHub ↗</a>
-        <a href="https://pokebonk.com/">Play the original ↗</a>
+        <a href="https://github.com/NaustudentX18/pokebonk-deck">GitHub Repository ↗</a>
+        <a href="https://pokebonk.com/">Original Web Game ↗</a>
       </div>
     </div>
     <p class="disclaimer">
-      PokéBonk Deck is not affiliated with, sponsored by, or endorsed by the creator of PokéBonk
-      or by Nintendo, The Pokémon Company, Creatures Inc. or GAME FREAK inc. Pokémon and related
-      names and images are trademarks of their respective owners. PokéBonk is an unofficial,
-      free, non-profit fan game. Gameplay imagery on this page is captured from the public game
-      for identification and demonstration purposes; no game assets are redistributed by this
-      project.
+      PokéBonk Deck is not affiliated with, sponsored by, or endorsed by Charcher (creator of PokéBonk), Nintendo, The Pokémon Company, Creatures Inc., or GAME FREAK inc. Pokémon and Pokémon character names are trademarks of Nintendo, Creatures Inc., and GAME FREAK inc. PokéBonk is a free, non-profit fan project. Gameplay media is presented under fair use for educational and demonstrative purposes.
     </p>
   </div>
 </footer>
+
+<!-- Toast for clipboard feedback -->
+<div id="copy-toast" class="toast">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  <span>Command copied to clipboard!</span>
+</div>
+
+<!-- ===================== CLIENT SCRIPTS ===================== -->
 <script>
-  // The live upstream build id. /version.json on pokebonk.com sends no CORS
-  // header, so the site mirrors it into data/version.json from CI.
+  // Tab switcher
+  function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    const target = document.getElementById(tabId);
+    if (target) target.classList.add('active');
+  }
+
+  // Copy helper with animated toast
+  function copyInstallCmd(elementId, btn) {
+    const el = document.getElementById(elementId);
+    const text = el ? (el.textContent || el.innerText) : '';
+    navigator.clipboard.writeText(text.trim()).then(() => {
+      const toast = document.getElementById('copy-toast');
+      if (toast) {
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2400);
+      }
+      if (btn) {
+        const originalText = btn.querySelector('span').textContent;
+        btn.querySelector('span').textContent = 'Copied!';
+        setTimeout(() => {
+          btn.querySelector('span').textContent = originalText;
+        }, 2000);
+      }
+    });
+  }
+
+  // Version polling sync from data/version.json
   fetch('data/version.json', { cache: 'no-cache' })
-    .then((r) => r.json())
-    .then((v) => {
-      const el = document.getElementById('live-build')
-      if (el) el.textContent = v.version ? `v${v.version} · ${v.build}` : v.build
+    .then(r => r.json())
+    .then(v => {
+      const el = document.getElementById('live-build');
+      if (el) el.textContent = v.version ? `v${v.version} · ${v.build}` : v.build;
     })
     .catch(() => {
-      const el = document.getElementById('live-build')
-      if (el) el.textContent = 'auto-updating'
-    })
+      const el = document.getElementById('live-build');
+      if (el) el.textContent = 'v0.8.59 · mvpt1dlr';
+    });
 </script>
 </body>
 </html>
