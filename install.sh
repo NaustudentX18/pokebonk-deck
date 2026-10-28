@@ -142,11 +142,14 @@ fi
 # Adds the game to the Steam library so it shows up in Game Mode, with the
 # controller enabled, the Deck's native resolution and the gamemode launch
 # option applied.
-STEAM_TOOL_URL="https://github.com/$REPO/releases/latest/download/steam_integration.py"
+# The helper must come from the SAME release as the app: releases/latest can
+# still point at the previous release for a while after a new one is published.
+STEAM_TOOL_URL=""
 STEAM_TOOL="$INSTALL_DIR/steam_integration.py"
 
 say "adding it to Steam (so it appears in Game Mode)…"
 STEAM_OK=0
+STEAM_TOOL_URL="https://github.com/$REPO/releases/download/$VERSION/steam_integration.py"
 if command -v python3 >/dev/null; then
   curl -fsSL -o "$STEAM_TOOL" "$STEAM_TOOL_URL" 2>/dev/null || true
   if [ -s "$STEAM_TOOL" ]; then
