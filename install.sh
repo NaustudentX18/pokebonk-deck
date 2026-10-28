@@ -31,7 +31,6 @@ say "  install dir : $INSTALL_DIR"
 say "  script      : $0"
 
 RELEASE_API="https://api.github.com/repos/$REPO/releases/latest"
-YML_URL="https://github.com/$REPO/releases/latest/download/latest-linux.yml"
 
 # --- 1. find the newest asset ------------------------------------------------
 say "looking up the latest release…"
@@ -45,8 +44,13 @@ VERSION="$(printf '%s' "$RELEASE_JSON" | grep -m1 -oE '"tag_name": *"[^"]+"' | s
 say "  version     : ${VERSION:-unknown}"
 
 # --- 2. expected checksum from latest-linux.yml ------------------------------
+# The manifest MUST come from the same release as the asset. Fetching it from
+# releases/latest can race with the release pointer and hand back a manifest
+# for a different build, which would fail the checksum for no good reason.
+[ -n "$VERSION" ] || die "could not determine the release tag"
+YML_URL="https://github.com/$REPO/releases/download/$VERSION/latest-linux.yml"
 say "fetching the checksum manifest…"
-YML="$(curl -fsSL "$YML_URL")" || die "could not fetch latest-linux.yml"
+YML="$(curl -fsSL "$YML_URL")" || die "could not fetch latest-linux.yml for $VERSION"
 EXPECTED_SHA512="$(printf '%s' "$YML" | grep -A2 "^  - url: .*x86_64\.AppImage$" | grep -m1 '^    sha512:' | sed -E 's/.*sha512: *//' || true)"
 [ -n "$EXPECTED_SHA512" ] || die "no sha512 for the AppImage in latest-linux.yml"
 
