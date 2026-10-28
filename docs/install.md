@@ -12,8 +12,25 @@ curl -fsSL https://github.com/NaustudentX18/pokebonk-deck/releases/latest/downlo
 
 Downloads the latest AppImage, verifies its sha512 against `latest-linux.yml`, installs it to
 `~/.local/share/pokebonk-deck/pokebonk-deck.AppImage`, writes
-`~/.local/share/applications/gg.pokebonk.deck.desktop` and installs the launcher icon.
-Re-running it upgrades in place.
+`~/.local/share/applications/gg.pokebonk.deck.desktop`, installs the launcher icon and adds
+the game to your **Steam library** so it appears in Game Mode with the controller set to the
+gamepad layout. Re-running it upgrades in place.
+
+The Steam integration:
+
+- creates the shortcut through Steam's own `steam://addnonsteamgame/<path>` handler, so
+  Steam assigns the appid and writes `shortcuts.vdf` itself
+- points the title at the neptune **gamepad** layout in
+  `Steam Controller Configs/<id>/config/configset_controller_neptune.vdf` — without a
+  per-title entry Steam falls back to the Desktop Layout, where the trackpads drive the
+  mouse instead of the game
+- writes `UseSteamControllerConfig`, the launch options and a `1280x800` resolution
+  override into `localconfig.vdf`
+- writes a launcher wrapper that uses gamemode when it is available and falls back when
+  it is not (`gamemoderun` is not on PATH inside the Steam Linux Runtime 3 container)
+
+Nothing it writes is destructive: `localconfig.vdf` is patched surgically, `shortcuts.vdf` is
+parsed and rewritten only if it is fully understood, and both are backed up.
 
 ## Steam Deck (SteamOS 3)
 

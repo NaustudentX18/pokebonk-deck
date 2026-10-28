@@ -236,12 +236,15 @@ mv ~/Downloads/PokebonkDeck-*.AppImage ~/.local/share/pokebonk-deck/</code></pre
       </div>
       <div class="step">
         <div>
-          <h3>Add it to Steam and play</h3>
-          <p>Library → Add a Non-Steam Game → browse to the AppImage. Set the launch option to
-          <code>gamemoderun %command%</code> so the Deck's performance governor and
-          gamescope session kick in.</p>
-          <pre><code><span class="c"># Steam shortcut launch option</span>
-gamemoderun %command%</code></pre>
+          <h3>It lands in your Steam library</h3>
+          <p>The installer adds the game to Steam itself, so it appears in your
+          library and in <strong>Game Mode</strong> with no further clicks. The
+          controller is set to the gamepad layout, the resolution is pinned to the
+          Deck's native 1280×800, and the launch goes through a wrapper that uses
+          gamemode when it is available.</p>
+          <pre><code><span class="c"># what the installer sets up for you</span>
+✓ Steam library entry      ✓ Steam Input: gamepad layout
+✓ 1280×800 resolution      ✓ gamemode when present</code></pre>
         </div>
       </div>
       <div class="step">

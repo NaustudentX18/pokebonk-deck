@@ -66,7 +66,21 @@ curl -fsSL https://github.com/NaustudentX18/pokebonk-deck/releases/latest/downlo
 
 That downloads the latest AppImage, verifies its sha512 against the published manifest,
 installs it to `~/.local/share/pokebonk-deck/pokebonk-deck.AppImage`, writes a `.desktop`
-entry and drops the launcher icon in place. Re-running it upgrades in place.
+entry, drops the launcher icon in place, and **adds the game to your Steam library** so it
+shows up in Game Mode with the controller already configured. Re-running it upgrades in
+place.
+
+What it sets up on the Deck:
+
+| | |
+|---|---|
+| Steam library entry | so it appears in the library and in Game Mode |
+| Steam Input | pointed at the neptune **gamepad** layout, not the Desktop Layout |
+| Resolution | `1280x800`, the Deck's native panel |
+| Launch | a wrapper that uses gamemode when it is available and falls back when it is not |
+
+> Steam Input cannot be disabled for the Deck's built-in controller — the correct fix is
+> the Gamepad action set, which the installer selects for you.
 
 <details>
 <summary>Manual install</summary>
