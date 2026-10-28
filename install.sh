@@ -28,6 +28,7 @@ esac
 
 say "PokéBonk Deck installer"
 say "  install dir : $INSTALL_DIR"
+say "  script      : $0"
 
 RELEASE_API="https://api.github.com/repos/$REPO/releases/latest"
 YML_URL="https://github.com/$REPO/releases/latest/download/latest-linux.yml"
@@ -85,14 +86,33 @@ chmod +x "$APPIMAGE"
 rm -f "$APPIMAGE.old"
 say "installed $APPIMAGE"
 
-# --- 5. desktop entry --------------------------------------------------------
+# --- 5. launch wrapper ------------------------------------------------------
+# gamemode gives the CPU governor, I/O priority and core parking that Desktop
+# Mode needs. It is NOT used blindly: on the Steam Linux Runtime 3 container
+# the wrapper is not on PATH, and a missing binary would break the launch
+# entirely. So the wrapper checks and falls back.
+LAUNCHER="$INSTALL_DIR/pokebonk-deck-launch.sh"
+cat > "$LAUNCHER" <<EOF
+#!/bin/sh
+# PokéBonk Deck launcher.
+# Uses gamemode when it is available; falls back to a plain launch.
+APP="$APPIMAGE"
+if command -v gamemoderun >/dev/null 2>&1; then
+  exec gamemoderun "\$APP" "\$@"
+fi
+exec "\$APP" "\$@"
+EOF
+chmod +x "$LAUNCHER"
+say "wrote $LAUNCHER"
+
+# --- 6. desktop entry --------------------------------------------------------
 mkdir -p "$DESKTOP_DIR"
 cat > "$DESKTOP_FILE" <<EOF
 [Desktop Entry]
 Type=Application
 Name=PokéBonk Deck
 Comment=Unofficial native Linux client for the PokéBonk browser game
-Exec=$APPIMAGE %U
+Exec=$LAUNCHER %U
 Icon=$BIN_NAME
 Terminal=false
 Categories=Game;
@@ -101,7 +121,7 @@ EOF
 chmod +x "$DESKTOP_FILE"
 say "wrote $DESKTOP_FILE"
 
-# --- 6. icon -----------------------------------------------------------------
+# --- 7. icon -----------------------------------------------------------------
 ICON_DIR="$HOME/.local/share/icons/hicolor/512x512/apps"
 mkdir -p "$ICON_DIR"
 ICON_URL="$(printf '%s' "$RELEASE_JSON" | grep -oE '"browser_download_url": *"[^"]*pokebonk-deck-icon\.png"' \
@@ -114,11 +134,11 @@ else
   warn "no icon asset in the release (not fatal)"
 fi
 
-# --- 7. Steam integration ----------------------------------------------------
+# --- 8. Steam integration ----------------------------------------------------
 # Adds the game to the Steam library so it shows up in Game Mode, with the
 # controller enabled, the Deck's native resolution and the gamemode launch
 # option applied.
-STEAM_TOOL_URL="https://raw.githubusercontent.com/$REPO/refs/heads/main/tools/steam_integration.py"
+STEAM_TOOL_URL="https://github.com/$REPO/releases/latest/download/steam_integration.py"
 STEAM_TOOL="$INSTALL_DIR/steam_integration.py"
 
 say "adding it to Steam (so it appears in Game Mode)…"
@@ -126,7 +146,7 @@ if command -v python3 >/dev/null; then
   curl -fsSL -o "$STEAM_TOOL" "$STEAM_TOOL_URL" 2>/dev/null || true
   if [ -s "$STEAM_TOOL" ]; then
     if python3 "$STEAM_TOOL" --exe "$APPIMAGE" --name "PokéBonk Deck" \
-         --launch-options "gamemoderun %command%" --resolution "1280x800"; then
+         --launcher "$LAUNCHER" --resolution "1280x800"; then
       say "Steam is set up"
     else
       warn "the Steam integration failed — add the AppImage by hand if needed"

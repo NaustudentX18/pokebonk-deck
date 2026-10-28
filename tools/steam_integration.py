@@ -236,30 +236,118 @@ def _render_block(appid: str, settings: dict) -> str:
     return "\n".join(lines)
 
 
-def patch_localconfig(path: Path, appid: str, settings: dict) -> bool:
-    """Insert or replace the per-app block inside the 'apps' section.
+def _find_all_blocks(text: str, key: str):
+    """Every block with the given key, as (body_start, body_end) pairs."""
+    results = []
+    offset = 0
+    while True:
+        found = _find_block(text[offset:], key)
+        if found is None:
+            return results
+        start, end = found
+        results.append((offset + start, offset + end))
+        offset = offset + end
+
+
+def patch_localconfig(path: Path, appid: str, settings: dict) -> int:
+    """Insert or replace the per-app block inside the 'apps' sections.
+
+    localconfig.vdf has two 'apps' sections in the wild — one under
+    Software/Valve/Steam and one at the store root — and the Steam Input
+    toggle is read from a different one depending on the client version, so
+    the block is written to every 'apps' section that exists.
 
     Everything outside the inserted block is left byte-for-byte untouched.
     """
     text = path.read_text(encoding="utf-8", errors="surrogateescape")
 
-    found = _find_block(text, "apps")
-    if found is None:
+    blocks = _find_all_blocks(text, "apps")
+    if not blocks:
+        return 0
+
+    # Patch from the last block backwards so earlier offsets stay valid.
+    for body_start, body_end in reversed(blocks):
+        inner = text[body_start:body_end]
+        pattern = re.compile(r'("' + re.escape(appid) + r'"\s*\{)(.*?)(\n\s*\})', re.S)
+        match = pattern.search(inner)
+        block = _render_block(appid, settings)
+        if match:
+            new_inner = inner[:match.start()] + block + inner[match.end():]
+        else:
+            new_inner = inner.rstrip() + "\n" + block + "\n" + inner[len(inner.rstrip()):]
+        text = text[:body_start] + new_inner + text[body_end:]
+
+    path.write_text(text, encoding="utf-8", errors="surrogateescape")
+    return len(blocks)
+
+
+# --------------------------------------------------------------------------- #
+# Per-title Steam Input configuration
+# --------------------------------------------------------------------------- #
+
+# The key Steam uses for a non-Steam shortcut is the title, lowercased, with
+# these characters stripped.
+_BAD_TITLE_CHARS = set('/\\?%*:|"<>.')
+
+
+def transform_title(title: str) -> str:
+    return "".join(c for c in title.lower() if c not in _BAD_TITLE_CHARS)
+
+
+def steam_input_config_path(root: Path, account_id: str) -> Path:
+    return (root / "steamapps/common/Steam Controller Configs" / account_id
+            / "config" / "configset_controller_neptune.vdf")
+
+
+def write_steam_input_config(root: Path, account_id: str, title: str,
+                              template: str) -> bool:
+    """Point this title at a gamepad layout instead of the Desktop Layout.
+
+    Without a per-title entry, Steam Input falls back to the global Desktop
+    Layout — the most common Steam Deck failure, where the trackpads drive
+    the mouse instead of the game.
+    """
+    template_path = root / "controller_base/templates" / template
+    if not template_path.is_file():
         return False
-    body_start, body_end = found
 
-    # Replace an existing block for this appid if there is one.
-    inner = text[body_start:body_end]
-    pattern = re.compile(r'("' + re.escape(appid) + r'"\s*\{)(.*?)(\n\s*\})', re.S)
-    match = pattern.search(inner)
-    block = _render_block(appid, settings)
-    if match:
-        new_inner = inner[:match.start()] + block + inner[match.end():]
+    path = steam_input_config_path(root, account_id)
+    key = transform_title(title)
+
+    existing = ""
+    if path.is_file():
+        existing = path.read_text(encoding="utf-8", errors="replace")
+
+    entry = (
+        f'\t"{key}"\n'
+        f'\t{{\n'
+        f'\t\t"template"\t\t"{template}"\n'
+        f'\t}}\n'
+    )
+
+    if existing.strip():
+        # Replace an existing entry for this title, keep every other entry.
+        pattern = re.compile(
+            r'\t"' + re.escape(key) + r'"\n\t\{[^{}]*\}\n', re.S)
+        if pattern.search(existing):
+            updated = pattern.sub(entry, existing)
+        else:
+            updated = existing
+            if not updated.endswith("\n"):
+                updated += "\n"
+            updated += entry
     else:
-        new_inner = inner.rstrip() + "\n" + block + "\n" + inner[len(inner.rstrip()):]
+        updated = (
+            '"controller_config"\n'
+            '{\n'
+            + entry
+            + '}\n'
+        )
 
-    path.write_text(text[:body_start] + new_inner + text[body_end:], encoding="utf-8",
-                    errors="surrogateescape")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.is_file():
+        shutil.copy2(path, path.with_suffix(".vdf.backup"))
+    path.write_text(updated, encoding="utf-8")
     return True
 
 
@@ -307,7 +395,7 @@ def shortcut_has_exe(shortcuts: Path, exe: str) -> bool:
     return exe.encode("utf-8") + b"\0" in data
 
 
-def find_entry_appid(shortcuts: Path, exe: str) -> int | None:
+def find_entry_appid(shortcuts: Path, command: str) -> int | None:
     """Return the appid of the shortcut whose Exe matches, if any."""
     try:
         parsed = read_bin_vdf(shortcuts.read_bytes())
@@ -317,7 +405,7 @@ def find_entry_appid(shortcuts: Path, exe: str) -> int | None:
     if not isinstance(entries, dict):
         return None
     for entry in entries.values():
-        if isinstance(entry, dict) and entry.get("Exe") == exe:
+        if isinstance(entry, dict) and entry.get("Exe") == command:
             appid = entry.get("appid")
             if isinstance(appid, int):
                 return appid
@@ -337,7 +425,8 @@ def add_via_steam_client(steam_bin: str, exe: str) -> bool:
 
 
 def add_via_shortcuts_vdf(userdata: Path, exe: str, app_name: str,
-                          icon: str, launch_options: str) -> int | None:
+                          icon: str, launch_options: str,
+                          app_path: str | None = None) -> int | None:
     """Fallback: write the shortcut into the binary shortcuts.vdf ourselves."""
     shortcuts = userdata / "config" / "shortcuts.vdf"
     try:
@@ -370,7 +459,7 @@ def add_via_shortcuts_vdf(userdata: Path, exe: str, app_name: str,
         exe=exe,
         app_name=app_name,
         appid=appid,
-        start_dir=str(Path(exe).parent),
+        start_dir=str(Path(app_path or exe).parent),
         icon=icon,
         launch_options=launch_options,
     )
@@ -400,6 +489,10 @@ def main(argv=None) -> int:
     parser.add_argument("--launch-options", default="gamemoderun %command%")
     parser.add_argument("--resolution", default="1280x800")
     parser.add_argument("--icon", default="")
+    parser.add_argument("--launcher", default="",
+                        help="wrapper script to launch (the AppImage path is passed to it)")
+    parser.add_argument("--input-template", default="controller_neptune_gamepad+mouse.vdf",
+                        help="Steam Input layout template to use for this title")
     parser.add_argument("--no-steam-input", action="store_true",
                         help="do not enable Steam Input for the shortcut")
     args = parser.parse_args(argv)
@@ -424,34 +517,45 @@ def main(argv=None) -> int:
     print(f"Steam profile: {profile.name}")
 
     shortcuts = profile / "config" / "shortcuts.vdf"
+    command = args.launcher or exe
 
     # 1. Let Steam create the shortcut if it can.
     steam_bin = find_steam_binary(root)
     added_by_steam = False
-    if steam_bin and not shortcut_has_exe(shortcuts, exe):
+    command = args.launcher or exe
+    if steam_bin and not shortcut_has_exe(shortcuts, command):
         print("Adding to the running Steam client…")
-        added_by_steam = add_via_steam_client(steam_bin, exe)
+        added_by_steam = add_via_steam_client(steam_bin, command)
         if added_by_steam:
             # Give the client a moment to write shortcuts.vdf.
             for _ in range(20):
-                if shortcut_has_exe(shortcuts, exe):
+                if shortcut_has_exe(shortcuts, command):
                     break
                 time.sleep(0.25)
 
     # 2. Fall back to writing the shortcut ourselves.
-    if not shortcut_has_exe(shortcuts, exe):
+    # The shortcut's command is the launcher wrapper (if any); the app path
+    # is passed to it as an argument. Steam's Exe field is a full command
+    # line, so the wrapper + argument is the exact command that runs.
+    command = args.launcher or exe
+    # The wrapper has the app path baked in, so the shortcut needs no
+    # arguments at all — that keeps the command unambiguous whichever
+    # LaunchOptions field Steam happens to read.
+    command_args = ""
+
+    if not shortcut_has_exe(shortcuts, command):
         print("Writing the shortcut directly…")
-        appid = add_via_shortcuts_vdf(profile, exe, args.name, args.icon,
-                                      args.launch_options)
+        appid = add_via_shortcuts_vdf(profile, command, args.name, args.icon,
+                                      command_args, app_path=exe)
         if appid is None:
             print("Could not add the shortcut automatically.", file=sys.stderr)
             print("Add it by hand: Library -> Add a Non-Steam Game.", file=sys.stderr)
             return 1
     else:
-        appid = find_entry_appid(shortcuts, exe)
+        appid = find_entry_appid(shortcuts, command)
         if appid is None:
-            appid = add_via_shortcuts_vdf(profile, exe, args.name, args.icon,
-                                          args.launch_options)
+            appid = add_via_shortcuts_vdf(profile, command, args.name, args.icon,
+                                          command_args, app_path=exe)
         if appid is None:
             print("The shortcut exists but its appid could not be read.", file=sys.stderr)
             return 1
@@ -461,7 +565,7 @@ def main(argv=None) -> int:
     # 3. Per-title settings live in localconfig.vdf.
     localconfig = profile / "config" / "localconfig.vdf"
     settings = {
-        "LaunchOptions": args.launch_options,
+        "LaunchOptions": "" if args.launcher else args.launch_options,
         "ResolutionOverride": args.resolution,
         "ResolutionOverrideInternalDisplay": args.resolution,
         "LastPlayed": str(int(time.time())),
@@ -478,12 +582,28 @@ def main(argv=None) -> int:
         print("  ! localconfig.vdf not found — per-title settings were not applied")
     else:
         try:
-            if patch_localconfig(localconfig, str(appid), settings):
-                print(f"Applied per-title settings to localconfig.vdf (appid {appid})")
+            # The appid key is the unsigned 32-bit value.
+            key = str(int(appid) & 0xFFFFFFFF)
+            blocks = patch_localconfig(localconfig, key, settings)
+            if blocks:
+                print(f"Applied per-title settings to {blocks} apps section(s) "
+                      f"in localconfig.vdf (appid {key})")
             else:
                 print("  ! could not find the 'apps' section in localconfig.vdf")
         except (OSError, ValueError) as error:
             print(f"  ! could not patch localconfig.vdf: {error}", file=sys.stderr)
+
+    # Per-title Steam Input: a gamepad layout instead of the Desktop Layout.
+    account_id = profile.name
+    try:
+        if write_steam_input_config(root, account_id, args.name, args.input_template):
+            print(f"Steam Input: using the {args.input_template} layout for this title")
+        else:
+            print("  ! the Steam Input gamepad template was not found — "
+                  "Steam will fall back to its Desktop Layout. Set it in "
+                  "Steam -> Settings -> Controller if the pad misbehaves.")
+    except OSError as error:
+        print(f"  ! could not write the Steam Input config: {error}", file=sys.stderr)
 
     print("Done. The game is in your Steam library — start it from Game Mode.")
     return 0

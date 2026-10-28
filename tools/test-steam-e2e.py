@@ -95,10 +95,21 @@ def main() -> int:
         Path(exe).write_text("#!/bin/sh\n")
         os.chmod(exe, 0o755)
 
+        launcher = home / ".local/share/pokebonk-deck/launch.sh"
+        launcher.parent.mkdir(parents=True, exist_ok=True)
+        launcher.write_text("#!/bin/sh\nexec \"$@\"\n")
+        os.chmod(launcher, 0o755)
+
+        # A fake Valve template so the Steam Input step has something to point at.
+        templates = steam_root / "controller_base/templates"
+        templates.mkdir(parents=True)
+        (templates / "controller_neptune_gamepad+mouse.vdf").write_text('"x" {}\n')
+
         rc = si.main([
             "--exe", exe,
             "--name", "PokéBonk Deck",
-            "--launch-options", "gamemoderun %command%",
+            "--launcher", str(launcher),
+            "--launch-options", "",
             "--resolution", "1280x800",
         ])
         if rc != 0:
@@ -123,10 +134,10 @@ def main() -> int:
             entry = found[0]
             # The path is stored unquoted: Steam's own URL handler takes a
             # plain path, and passing a pre-quoted one double-quotes it.
-            if entry["Exe"] != exe:
-                failures.append(f"Exe is not the plain path: {entry['Exe']!r}")
-            if entry["LaunchOptions"] != "gamemoderun %command%":
-                failures.append(f"LaunchOptions wrong: {entry['LaunchOptions']!r}")
+            if entry["Exe"] != str(launcher):
+                failures.append(f"Exe is not the launcher: {entry['Exe']!r}")
+            if entry["LaunchOptions"] != "":
+                failures.append(f"LaunchOptions should be empty: {entry['LaunchOptions']!r}")
             if not isinstance(entry["appid"], int) or entry["appid"] < 0x80000000:
                 failures.append(f"appid not in the NSG range: {entry['appid']!r}")
 
@@ -135,7 +146,7 @@ def main() -> int:
             appid = str(entry["appid"])
             if f'"{appid}"' not in text:
                 failures.append("no per-app block in localconfig.vdf")
-            if '"LaunchOptions"\t\t"gamemoderun %command%"' not in text:
+            if '"LaunchOptions"\t\t""' not in text:
                 failures.append("LaunchOptions not written")
             if '"UseSteamControllerConfig"\t\t"1"' not in text:
                 failures.append("Steam Input not enabled")
@@ -146,9 +157,27 @@ def main() -> int:
             if text.count("{") != text.count("}"):
                 failures.append("unbalanced braces in localconfig.vdf")
 
+        # The Steam Input configset must point the title at a gamepad layout.
+        configset = (steam_root / "steamapps/common/Steam Controller Configs"
+                     / profile.name / "config/configset_controller_neptune.vdf")
+        if not configset.is_file():
+            failures.append("no Steam Input configset was written")
+        else:
+            body = configset.read_text(encoding="utf-8")
+            if si.transform_title("PokéBonk Deck") not in body:
+                failures.append(f"configset has no title key: {body!r}")
+            if "controller_neptune_gamepad+mouse.vdf" not in body:
+                failures.append("configset does not select the gamepad template")
+
         # A second run must not duplicate the shortcut.
         before = len(entries)
-        si.main(["--exe", exe, "--name", "PokéBonk Deck"])
+        si.main([
+            "--exe", exe,
+            "--name", "PokéBonk Deck",
+            "--launcher", str(launcher),
+            "--launch-options", "",
+            "--resolution", "1280x800",
+        ])
         after = len(si.read_bin_vdf(shortcuts.read_bytes())["shortcuts"])
         if after != before:
             failures.append(f"re-running duplicated the shortcut ({before} -> {after})")
