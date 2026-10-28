@@ -226,14 +226,32 @@ def _find_block(text: str, key: str):
     return None
 
 
-def _render_block(appid: str, settings: dict) -> str:
-    lines = [f'\t"{appid}"']
-    lines.append("\t{")
+def _render_block(appid: str, settings: dict, indent: str = "\t") -> str:
+    """Render one app block, matching the indentation of its siblings."""
+    lines = [f'{indent}"{appid}"']
+    lines.append(f"{indent}{{")
     for key, value in settings.items():
         escaped = str(value).replace("\\", "\\\\").replace('"', '\\"')
-        lines.append(f'\t\t"{key}"\t\t"{escaped}"')
-    lines.append("\t}")
+        lines.append(f'{indent}\t"{key}"\t\t"{escaped}"')
+    lines.append(f"{indent}}}")
     return "\n".join(lines)
+
+
+def _sibling_indent(inner: str) -> str:
+    """The indentation used by the blocks already in this section.
+
+    A sibling block looks like:
+        <indent>"123"
+        <indent>{
+    so the indent comes from the quoted key line.
+    """
+    for line in inner.splitlines():
+        stripped = line.lstrip("\t ")
+        if stripped.startswith('"') and stripped.rstrip().endswith('"'):
+            prefix = line[:len(line) - len(stripped)]
+            if prefix and prefix.strip() == "":
+                return prefix
+    return "\t"
 
 
 def _find_all_blocks(text: str, key: str):
@@ -270,7 +288,7 @@ def patch_localconfig(path: Path, appid: str, settings: dict) -> int:
         inner = text[body_start:body_end]
         pattern = re.compile(r'("' + re.escape(appid) + r'"\s*\{)(.*?)(\n\s*\})', re.S)
         match = pattern.search(inner)
-        block = _render_block(appid, settings)
+        block = _render_block(appid, settings, _sibling_indent(inner))
         if match:
             new_inner = inner[:match.start()] + block + inner[match.end():]
         else:
@@ -573,10 +591,7 @@ def main(argv=None) -> int:
         "Playtime": "0",
         "UseSteamControllerConfig": "0" if args.no_steam_input else "1",
         "AllowLaunchInVR": "0",
-        "AllowOverlay": "1",
-        "AllowDesktopConfig": "1",
         "DisableLaunchInVR": "0",
-        "AllowInvalidSteamController": "0",
     }
 
     if not localconfig.exists():
