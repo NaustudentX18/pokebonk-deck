@@ -113,6 +113,23 @@ controller, and Desktop Layout would send mouse/keyboard instead.
 
 </details>
 
+## Uninstall
+
+One command, and the machine is back exactly as it was before:
+
+```bash
+curl -fsSL https://github.com/NaustudentX18/pokebonk-deck/releases/latest/download/uninstall.sh | bash
+```
+
+It removes the app, the desktop entry, the icon, the app's state, the Steam
+shortcut, the `localconfig.vdf` block, the per-title Steam Input entry and the
+capsule artwork. Everything else in your Steam library is left alone, and
+`shortcuts.vdf` and `localconfig.vdf` are backed up first.
+
+> Quit the Steam client before running it — the client keeps the shortcut list
+> in memory and rewrites `shortcuts.vdf` on exit, which would put the
+> shortcut back.
+
 ## How updates work
 
 Two independent channels:
