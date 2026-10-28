@@ -40,6 +40,44 @@ const getLastBuild = () => readState().lastBuild ?? null
 const setLastBuild = (build) => writeState({ lastBuild: build })
 
 /* ------------------------------------------------------------------ *
+ * GPU fallback
+ * ------------------------------------------------------------------ *
+ * Chromium aborts the whole app when the GPU process cannot start (a VM, a
+ * remote desktop, a missing /dev/dri). The game still runs on software
+ * rendering, so fall back to that once and remember the choice.
+ */
+
+const SOFTWARE_FLAG = 'softwareRendering'
+
+function useSoftwareRendering() {
+  try {
+    return Boolean(readState()[SOFTWARE_FLAG])
+  } catch {
+    return false
+  }
+}
+
+// Must be applied before the app becomes ready. Electron's own API is what
+// actually stops Chromium from requiring a GPU process; the switches alone
+// still leave it spawning one and aborting the app.
+if (useSoftwareRendering()) {
+  app.disableHardwareAcceleration()
+  app.commandLine.appendSwitch('use-gl', 'angle')
+  app.commandLine.appendSwitch('use-angle', 'swiftshader')
+  app.commandLine.appendSwitch('enable-unsafe-swiftshader')
+  log('software rendering enabled (persisted from a previous GPU failure)')
+}
+
+app.on('child-process-gone', (_event, details) => {
+  if (details.type !== 'GPU') return
+  if (useSoftwareRendering()) return
+  log('GPU process died — relaunching with software rendering')
+  writeState({ [SOFTWARE_FLAG]: true })
+  app.relaunch()
+  app.exit(0)
+})
+
+/* ------------------------------------------------------------------ *
  * Update handling
  * ------------------------------------------------------------------ */
 
