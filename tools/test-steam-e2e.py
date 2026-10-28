@@ -159,6 +159,19 @@ def main() -> int:
             if text.count("{") != text.count("}"):
                 failures.append("unbalanced braces in localconfig.vdf")
 
+        # A second run must correct an entry the Steam client created itself
+        # (overlay on, wrong title) rather than adding another one.
+        si.update_entry(shortcuts, str(launcher), "PokéBonk Deck", "", allow_overlay=False)
+        updated = si.read_bin_vdf(shortcuts.read_bytes())["shortcuts"]
+        ours = [e for e in updated.values()
+                if isinstance(e, dict) and e.get("exe") == str(launcher)]
+        if len(ours) != 1:
+            failures.append(f"expected one entry, found {len(ours)}")
+        elif ours[0].get("AllowOverlay") != 0:
+            failures.append("the overlay was not turned off on the existing entry")
+        elif ours[0].get("appname") != "PokéBonk Deck":
+            failures.append(f"title not corrected: {ours[0].get('appname')!r}")
+
         # The Steam Input configset must point the title at a gamepad layout.
         configset = (steam_root / "steamapps/common/Steam Controller Configs"
                      / profile.name / "config/configset_controller_neptune.vdf")

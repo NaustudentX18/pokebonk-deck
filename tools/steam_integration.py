@@ -453,6 +453,54 @@ def find_steam_binary(root: Path) -> str | None:
 # Adding the shortcut
 # --------------------------------------------------------------------------- #
 
+def update_entry(shortcuts: Path, command: str, app_name: str, icon: str,
+                 allow_overlay: bool = False) -> bool:
+    """Update an existing shortcut in place.
+
+    The Steam client creates the shortcut itself when the URL handler is
+    used, and that entry has the overlay enabled — which is what kills an
+    Electron app on the Deck. So an entry we did not write still has to be
+    corrected.
+    """
+    try:
+        data = shortcuts.read_bytes()
+        parsed = read_bin_vdf(data)
+    except (OSError, BinVdfError):
+        return False
+
+    entries = parsed.get("shortcuts", {})
+    if not isinstance(entries, dict):
+        return False
+
+    changed = False
+    for entry in entries.values():
+        if not isinstance(entry, dict):
+            continue
+        exe = entry.get("exe") or entry.get("Exe") or ""
+        if exe != command and exe.strip('"') != command:
+            continue
+        if app_name:
+            entry["appname"] = app_name
+            changed = True
+        if icon and entry.get("icon") != icon:
+            entry["icon"] = icon
+            changed = True
+        wanted = 1 if allow_overlay else 0
+        if entry.get("AllowOverlay") != wanted:
+            entry["AllowOverlay"] = wanted
+            changed = True
+
+    if not changed:
+        return False
+
+    try:
+        shutil.copy2(shortcuts, shortcuts.with_suffix(".vdf.bak"))
+        shortcuts.write_bytes(write_bin_vdf(parsed))
+    except OSError:
+        return False
+    return True
+
+
 def shortcut_has_exe(shortcuts: Path, exe: str) -> bool:
     """True if the file already holds a shortcut for this command.
 
@@ -673,6 +721,11 @@ def main(argv=None) -> int:
                 print("  ! could not find the 'apps' section in localconfig.vdf")
         except (OSError, ValueError) as error:
             print(f"  ! could not patch localconfig.vdf: {error}", file=sys.stderr)
+
+    # If the entry already existed (the client created it), correct it: the
+    # overlay has to be off and the icon set.
+    if update_entry(shortcuts, command, args.name, args.icon):
+        print("Updated the existing shortcut (overlay off, icon set)")
 
     # The Steam Input configset is keyed by the title as the CLIENT stored it.
     # When the client creates the shortcut itself, that title is the exe's

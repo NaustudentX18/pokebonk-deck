@@ -151,7 +151,7 @@ say "adding it to Steam (so it appears in Game Mode)…"
 STEAM_OK=0
 STEAM_TOOL_URL="https://github.com/$REPO/releases/download/$VERSION/steam_integration.py"
 ARTWORK_DIR="$INSTALL_DIR/artwork"
-ARTWORK_BASE="https://github.com/$REPO/releases/download/$VERSION/artwork"
+ARTWORK_BASE="https://github.com/$REPO/releases/download/$VERSION"
 if command -v python3 >/dev/null; then
   curl -fsSL -o "$STEAM_TOOL" "$STEAM_TOOL_URL" 2>/dev/null || true
   if [ -s "$STEAM_TOOL" ]; then
