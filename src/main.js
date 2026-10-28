@@ -221,7 +221,68 @@ function startShellUpdater(win) {
  * Boot
  * ------------------------------------------------------------------ */
 
+/**
+ * --selftest: load the game, report what this machine actually provides, exit.
+ * Used by tools/deck-verify.sh to prove the client works on real hardware.
+ */
+async function runSelfTest() {
+  const out = { ok: false, checks: {} }
+  const win = createGameWindow()
+
+  try {
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('the game did not load in 60s')), 60000)
+      win.webContents.once('did-finish-load', () => { clearTimeout(timer); resolve() })
+      win.webContents.once('did-fail-load', (_e, code, desc) => {
+        clearTimeout(timer); reject(new Error(`load failed: ${code} ${desc}`))
+      })
+    })
+    out.checks.loaded = true
+  } catch (error) {
+    out.checks.loadError = String(error.message || error)
+  }
+
+  // Give the game a moment to build its canvas and start its own checks.
+  await new Promise((r) => setTimeout(r, 6000))
+
+  try {
+    const info = await win.webContents.executeJavaScript(`(() => {
+      const canvas = document.querySelector('canvas')
+      const gl = canvas && (canvas.getContext('webgl2') || canvas.getContext('webgl'))
+      const dbg = gl && gl.getExtension('WEBGL_debug_renderer_info')
+      const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : []
+      return JSON.stringify({
+        origin: location.origin,
+        build: document.querySelector('meta[name="pokebonk-build"]')?.content || null,
+        title: document.title,
+        canvas: document.querySelectorAll('canvas').length,
+        webgl2: !!canvas && !!canvas.getContext('webgl2'),
+        renderer: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : null,
+        softwareRenderer: dbg ? /swiftshader|llvmpipe|softpipe|software|basic render/i
+          .test(String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL))) : null,
+        gamepads: pads.map(p => ({ id: p.id, index: p.index, mapping: p.mapping })),
+        bridge: typeof window.__deck
+      })
+    })()`)
+    Object.assign(out.checks, JSON.parse(info))
+  } catch (error) {
+    out.checks.probeError = String(error.message || error)
+  }
+
+  out.checks.electron = process.versions.electron
+  out.checks.chrome = process.versions.chrome
+  out.checks.upstream = await probeVersion()
+  out.ok = Boolean(out.checks.loaded) && out.checks.webgl2 === true
+  console.log('SELFTEST_JSON ' + JSON.stringify(out))
+  app.exit(out.ok ? 0 : 1)
+}
+
 app.whenReady().then(() => {
+  if (process.argv.includes('--selftest')) {
+    void runSelfTest()
+    return
+  }
+
   const win = createGameWindow()
   registerShortcuts(win)
 

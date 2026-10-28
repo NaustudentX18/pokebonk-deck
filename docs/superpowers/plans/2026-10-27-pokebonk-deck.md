@@ -1362,11 +1362,13 @@ Expected: a `https://naustudentx18.github.io/pokebonk-deck/` URL.
 
 - [ ] **Step 1: Install on the Deck**
 
-`tools/deck-verify.sh` automates every check below — run it on the Deck in Desktop Mode and
-paste the output back:
+`tools/deck-verify.sh` automates every check below, runs the client's own
+`--selftest` (which loads the live game and reports the renderer, the origin
+and the connected gamepads) and posts the whole report back to the collector.
+One command on the Deck, in Desktop Mode:
 
 ```bash
-bash deck-verify.sh
+curl -fsSL https://github.com/NaustudentX18/pokebonk-deck/releases/latest/download/deck-verify.sh | bash
 ```
 
 It covers the eight things that can silently break the client: user namespaces (the

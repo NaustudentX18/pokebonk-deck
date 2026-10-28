@@ -5,6 +5,12 @@
 # Nothing here installs anything or changes settings.
 set -uo pipefail
 
+# Everything printed from here on is also written to a file, so the report can
+# be posted back at the end without re-running anything.
+REPORT_FILE="${POKEBONK_REPORT_FILE:-/tmp/pokebonk-deck-report.txt}"
+exec > >(tee "$REPORT_FILE")
+trap 'exec 1>&- 2>&-; wait' EXIT
+
 line() { printf '\n\033[1;36m── %s\033[0m\n' "$1"; }
 ok()   { printf '  \033[32m✓\033[0m %s\n' "$1"; }
 warn() { printf '  \033[33m!\033[0m %s\n' "$1"; }
@@ -80,5 +86,32 @@ for lib in libnss3.so libatk-1.0.so.0 libgbm.so.1 libasound.so.2 libcups.so.2 li
   if printf '%s' "$ldc" | grep -F "$lib" >/dev/null; then ok "$lib"; else bad "$lib MISSING"; fi
 done
 
-line "8. Summary"
+line "8. The client itself"
+APPIMAGE="${POKEBONK_APPIMAGE:-$HOME/.local/share/pokebonk-deck/pokebonk-deck.AppImage}"
+if [ -x "$APPIMAGE" ]; then
+  echo "  running the client self-test: $APPIMAGE"
+  SELFTEST="$(timeout 120 "$APPIMAGE" --selftest 2>&1 | grep -E 'SELFTEST_JSON' | head -1)"
+  if [ -n "$SELFTEST" ]; then
+    echo "  ${SELFTEST#SELFTEST_JSON }"
+  else
+    echo "  ! the self-test produced no result (run it by hand for the error)"
+  fi
+else
+  echo "  ! client not found at $APPIMAGE — install it first"
+fi
+
+line "9. Summary"
 echo "  Copy everything above back to the agent — especially section 4."
+
+# --- report back automatically ------------------------------------------------
+# If a collector is reachable, send the whole report there so nobody has to
+# copy and paste it.
+REPORT_URL="${POKEBONK_REPORT_URL:-http://192.168.4.220:8100/report}"
+if command -v curl >/dev/null && [ -n "$REPORT_URL" ]; then
+  sleep 0.3
+  if curl -fsS --max-time 10 -X POST --data-binary @"$REPORT_FILE" "$REPORT_URL" >/dev/null 2>&1; then
+    echo "  report sent to $REPORT_URL"
+  else
+    echo "  (could not reach $REPORT_URL — copy this output instead)"
+  fi
+fi
