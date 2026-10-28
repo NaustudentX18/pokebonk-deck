@@ -15,19 +15,126 @@ import os
 import pathlib
 import re
 import shutil
+import struct
 import sys
 
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+# The binary KeyValues1 reader/writer is vendored in here on purpose: this
+# script has to work as a single downloaded file, with nothing else beside it.
 
-try:
-    from steam_integration import (  # noqa: E402
-        BinVdfError,
-        read_bin_vdf,
-        write_bin_vdf,
-    )
-except ImportError:
-    print("steam_integration.py must sit next to this script", file=sys.stderr)
-    raise SystemExit(1)
+# Type bytes in Valve's binary KeyValues1 format.
+KV_MAP = 0x00
+KV_STRING = 0x01
+KV_INT32 = 0x02
+KV_END = 0x08
+
+
+class BinVdfError(Exception):
+    pass
+
+
+def read_bin_vdf(data: bytes):
+    """Parse a binary KeyValues1 blob into nested dicts/lists/values."""
+    pos = 0
+
+    def read_cstring() -> str:
+        nonlocal pos
+        end = data.find(b"\0", pos)
+        if end < 0:
+            raise BinVdfError("unterminated string")
+        out = data[pos:end].decode("utf-8", "replace")
+        pos = end + 1
+        return out
+
+    def read_value(kind: int):
+        nonlocal pos
+        if kind == KV_STRING:
+            return read_cstring()
+        if kind == KV_INT32:
+            if pos + 4 > len(data):
+                raise BinVdfError("truncated int32")
+            # Unsigned: shortcut appids live in [0x80000000, 0xFFFFFFFF] and
+            # do not fit a signed 32-bit int.
+            value = struct.unpack_from("<I", data, pos)[0]
+            pos += 4
+            return value
+        if kind == KV_MAP:
+            return read_map()
+        if kind in (0x06, 0x07):  # uint64 / int64
+            if pos + 8 > len(data):
+                raise BinVdfError("truncated int64")
+            pos += 8
+            return 0
+        raise BinVdfError(f"unknown type byte 0x{kind:02x}")
+
+    def read_map() -> dict:
+        nonlocal pos
+        out = {}
+        while True:
+            if pos >= len(data):
+                raise BinVdfError("unexpected end of data")
+            kind = data[pos]
+            pos += 1
+            if kind == KV_END:
+                return out
+            key = read_cstring()
+            out[key] = read_value(kind)
+
+    root = read_map()
+    if pos != len(data):
+        # Trailing bytes mean we did not understand the file. Refuse to write.
+        raise BinVdfError(f"{len(data) - pos} trailing bytes")
+    return root
+
+
+def write_bin_vdf(root: dict) -> bytes:
+    """Serialise back to Valve's binary KeyValues1, byte-for-byte reversible."""
+    out = bytearray()
+
+    def write_cstring(text: str) -> None:
+        out.extend(text.encode("utf-8"))
+        out.append(0)
+
+    def write_map(mapping: dict) -> None:
+        for key, value in mapping.items():
+            write_entry(key, value)
+        out.append(KV_END)
+
+    def write_entry(key: str, value) -> None:
+        if isinstance(value, str):
+            out.append(KV_STRING)
+            write_cstring(key)
+            write_cstring(value)
+        elif isinstance(value, bool):
+            out.append(KV_INT32)
+            write_cstring(key)
+            out.extend(struct.pack("<I", 1 if value else 0))
+        elif isinstance(value, int):
+            out.append(KV_INT32)
+            write_cstring(key)
+            out.extend(struct.pack("<I", value & 0xFFFFFFFF))
+        elif isinstance(value, dict):
+            out.append(KV_MAP)
+            write_cstring(key)
+            write_map(value)
+        else:
+            raise BinVdfError(f"cannot serialise {type(value)}")
+
+    shortcuts = root.get("shortcuts", {})
+    if not isinstance(shortcuts, dict):
+        raise BinVdfError("the root map has no 'shortcuts' section")
+
+    # File shape: <00> "shortcuts" <entry...> <08> <08>
+    # The leading 0x00 is the root map's type byte; the two end markers close
+    # the "shortcuts" map and then the file.
+    out.append(KV_MAP)
+    write_cstring("shortcuts")
+    for key, value in shortcuts.items():
+        write_entry(key, value)
+    out.append(KV_END)  # end of the "shortcuts" map
+    out.append(KV_END)  # end of the file
+    return bytes(out)
+
+
 
 HOME = pathlib.Path.home()
 INSTALL_DIR = HOME / ".local/share/pokebonk-deck"

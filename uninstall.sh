@@ -19,14 +19,9 @@ command -v python3 >/dev/null || {
 
 rm -rf "$WORK" && mkdir -p "$WORK"
 
-# uninstall.py imports steam_integration for the binary shortcuts.vdf reader,
-# so both have to sit in the same directory.
+# The uninstaller is self-contained: one file, nothing beside it.
 curl -fsSL -o "$UNINSTALLER" "$BASE/uninstall.py" || {
   printf 'could not fetch the uninstaller\n' >&2
-  exit 1
-}
-curl -fsSL -o "$WORK/steam_integration.py" "$BASE/steam_integration.py" || {
-  printf 'could not fetch the Steam helper\n' >&2
   exit 1
 }
 
