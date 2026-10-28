@@ -86,11 +86,12 @@ function pollGamepads() {
       break
     }
   }
-  requestAnimationFrame(pollGamepads)
 }
 
+// A timer, not requestAnimationFrame: rAF is throttled to a stop when the
+// window is not the focused/visible one, and the bridge would silently stop
+// working — which is exactly what happens when the shell is behind another
+// window, or in the moment before the game takes focus.
 if (typeof window !== 'undefined') {
-  window.addEventListener('DOMContentLoaded', () => {
-    requestAnimationFrame(pollGamepads)
-  })
+  setInterval(pollGamepads, 100)
 }
