@@ -37,16 +37,16 @@ say "looking up the latest release…"
 RELEASE_JSON="$(curl -fsSL "$RELEASE_API")" || die "could not reach the GitHub API"
 
 ASSET_URL="$(printf '%s' "$RELEASE_JSON" | grep -oE '"browser_download_url": *"[^"]*PokebonkDeck-[0-9][^"]*x86_64\.AppImage"' \
-  | head -1 | sed -E 's/.*"([^"]*)"$/\1/')"
+  | head -1 | sed -E 's/.*"([^"]*)"$/\1/' || true)"
 [ -n "$ASSET_URL" ] || die "no x86_64 AppImage in the latest release"
 
-VERSION="$(printf '%s' "$RELEASE_JSON" | grep -m1 -oE '"tag_name": *"[^"]+"' | sed -E 's/.*"([^"]+)"/\1/')"
+VERSION="$(printf '%s' "$RELEASE_JSON" | grep -m1 -oE '"tag_name": *"[^"]+"' | sed -E 's/.*"([^"]+)"/\1/' || true)"
 say "  version     : ${VERSION:-unknown}"
 
 # --- 2. expected checksum from latest-linux.yml ------------------------------
 say "fetching the checksum manifest…"
 YML="$(curl -fsSL "$YML_URL")" || die "could not fetch latest-linux.yml"
-EXPECTED_SHA512="$(printf '%s' "$YML" | grep -A2 "^  - url: .*x86_64\.AppImage$" | grep -m1 '^    sha512:' | sed -E 's/.*sha512: *//')"
+EXPECTED_SHA512="$(printf '%s' "$YML" | grep -A2 "^  - url: .*x86_64\.AppImage$" | grep -m1 '^    sha512:' | sed -E 's/.*sha512: *//' || true)"
 [ -n "$EXPECTED_SHA512" ] || die "no sha512 for the AppImage in latest-linux.yml"
 
 # --- 3. download -------------------------------------------------------------
@@ -105,7 +105,7 @@ say "wrote $DESKTOP_FILE"
 ICON_DIR="$HOME/.local/share/icons/hicolor/512x512/apps"
 mkdir -p "$ICON_DIR"
 ICON_URL="$(printf '%s' "$RELEASE_JSON" | grep -oE '"browser_download_url": *"[^"]*pokebonk-deck-icon\.png"' \
-  | head -1 | sed -E 's/.*"([^"]*)"$/\1/')"
+  | head -1 | sed -E 's/.*"([^"]*)"$/\1/' || true)"
 if [ -n "$ICON_URL" ]; then
   curl -fsSL -o "$ICON_DIR/$BIN_NAME.png" "$ICON_URL" \
     && say "installed the launcher icon" \
