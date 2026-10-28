@@ -215,6 +215,14 @@ def main() -> int:
     if args.dry_run:
         print("(dry run — nothing is changed)")
 
+    try:
+        from steam_integration import steam_client_running
+        if steam_client_running():
+            print("  ! the Steam client is running — it rewrites shortcuts.vdf on exit,")
+            print("    so it may put the shortcut back. Quit Steam first, then run this.")
+    except ImportError:
+        pass
+
     # 1. Files the installer created.
     for path in (INSTALL_DIR, STATE_DIR):
         if path.exists():

@@ -147,6 +147,11 @@ fi
 STEAM_TOOL_URL=""
 STEAM_TOOL="$INSTALL_DIR/steam_integration.py"
 
+if pgrep -x steam >/dev/null 2>&1 || pgrep -x steamwebhelper >/dev/null 2>&1; then
+  warn "the Steam client is running — it rewrites shortcuts.vdf on exit."
+  warn "quit Steam (steam -shutdown) and re-run this, or restart the client afterwards."
+fi
+
 say "adding it to Steam (so it appears in Game Mode)…"
 STEAM_OK=0
 STEAM_TOOL_URL="https://github.com/$REPO/releases/download/$VERSION/steam_integration.py"

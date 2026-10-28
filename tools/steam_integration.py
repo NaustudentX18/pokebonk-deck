@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import pathlib
 import re
 import shutil
 import struct
@@ -415,6 +416,32 @@ def install_artwork(root: Path, appid: int, artwork_dir: Path) -> int:
         except OSError:
             pass
     return installed
+
+
+def steam_client_running() -> bool:
+    """True when the Steam client is running on this machine.
+
+    The client keeps the shortcut list in memory and rewrites shortcuts.vdf
+    on exit, so a file we edit underneath it can be silently reverted. Any
+    tool that edits that file has to say so.
+    """
+    for proc in pathlib.Path("/proc").iterdir():
+        if not proc.name.isdigit():
+            continue
+        try:
+            exe = (proc / "comm").read_text().strip()
+        except OSError:
+            continue
+        if exe in ("steam", "steamwebhelper", "steamerrorreporter"):
+            return True
+    return False
+
+
+def warn_about_steam_client() -> None:
+    if steam_client_running():
+        print("  ! the Steam client is running — it rewrites shortcuts.vdf on exit.")
+        print("    Quit Steam (or run 'steam -shutdown') and add the game again,")
+        print("    or restart the client afterwards to pick up these changes.")
 
 
 # --------------------------------------------------------------------------- #
