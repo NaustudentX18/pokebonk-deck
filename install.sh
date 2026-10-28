@@ -56,7 +56,17 @@ say "downloading…"
 curl -fL --progress-bar -o "$TMP" "$ASSET_URL" || { rm -f "$TMP"; die "download failed"; }
 
 say "verifying sha512…"
-ACTUAL_SHA512="$(sha512sum "$TMP" | cut -d' ' -f1)"
+# latest-linux.yml carries the digest base64-encoded, which is what
+# electron-updater itself compares against. sha512sum prints hex, so
+# convert rather than comparing the two directly.
+sha512_b64() {
+  if command -v openssl >/dev/null; then
+    openssl dgst -sha512 -binary "$1" | base64 | tr -d '\n'
+  else
+    sha512sum "$1" | cut -d' ' -f1 | xxd -r -p | base64 | tr -d '\n'
+  fi
+}
+ACTUAL_SHA512="$(sha512_b64 "$TMP")"
 if [ "$ACTUAL_SHA512" != "$EXPECTED_SHA512" ]; then
   rm -f "$TMP"
   die "checksum mismatch — refusing to install"
