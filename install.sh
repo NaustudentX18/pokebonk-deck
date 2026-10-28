@@ -115,14 +115,18 @@ APP="$APPIMAGE"
 
 if [ -n "\${LD_PRELOAD:-}" ]; then
   cleaned=""
+  removed=0
   for lib in \$(printf '%s' "\$LD_PRELOAD" | tr ':' ' '); do
     case "\$lib" in
-      *gameoverlayrenderer*) continue ;;
+      *gameoverlayrenderer*)
+        removed=1
+        continue ;;
       *) cleaned="\${cleaned:+\$cleaned:}\$lib" ;;
     esac
   done
   LD_PRELOAD="\$cleaned"
   export LD_PRELOAD
+  [ "\$removed" = "1" ] && echo "[deck] the Steam overlay was removed from the preload chain" >&2
 fi
 
 if command -v gamemoderun >/dev/null 2>&1; then
