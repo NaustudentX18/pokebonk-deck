@@ -147,7 +147,9 @@ fi
 STEAM_TOOL_URL=""
 STEAM_TOOL="$INSTALL_DIR/steam_integration.py"
 
+STEAM_WAS_RUNNING=0
 if pgrep -x steam >/dev/null 2>&1 || pgrep -x steamwebhelper >/dev/null 2>&1; then
+  STEAM_WAS_RUNNING=1
   warn "the Steam client is running — it rewrites shortcuts.vdf on exit."
   warn "quit Steam (steam -shutdown) and re-run this, or restart the client afterwards."
 fi
@@ -183,6 +185,16 @@ if command -v python3 >/dev/null; then
 else
   warn "python3 is not available, skipping the Steam integration"
   warn "add it by hand: Library -> Add a Non-Steam Game -> $APPIMAGE"
+fi
+
+if [ "$STEAM_WAS_RUNNING" = "1" ]; then
+  cat <<'EOF'
+
+*** Quit and reopen Steam now. ***
+The client reads shortcuts.vdf only when it starts, so the settings just
+written (the overlay switch, the icon, the layout) are not live until the
+client restarts. Until then the game will still hang on the loading screen.
+EOF
 fi
 
 cat <<EOF
