@@ -150,11 +150,21 @@ STEAM_TOOL="$INSTALL_DIR/steam_integration.py"
 say "adding it to Steam (so it appears in Game Mode)…"
 STEAM_OK=0
 STEAM_TOOL_URL="https://github.com/$REPO/releases/download/$VERSION/steam_integration.py"
+ARTWORK_DIR="$INSTALL_DIR/artwork"
+ARTWORK_BASE="https://github.com/$REPO/releases/download/$VERSION/artwork"
 if command -v python3 >/dev/null; then
   curl -fsSL -o "$STEAM_TOOL" "$STEAM_TOOL_URL" 2>/dev/null || true
   if [ -s "$STEAM_TOOL" ]; then
+    # The Steam library art, so the entry is not a blank tile.
+    mkdir -p "$ARTWORK_DIR"
+    for art in library_hero.jpg library_capsule.jpg capsule.jpg capsulev5.jpg \
+                header.jpg logo.png icon.jpg; do
+      curl -fsSL -o "$ARTWORK_DIR/$art" "$ARTWORK_BASE/$art" 2>/dev/null || true
+    done
+
     if python3 "$STEAM_TOOL" --exe "$APPIMAGE" --name "PokéBonk Deck" \
-         --launcher "$LAUNCHER" --resolution "1280x800" > "$INSTALL_DIR/steam-setup.log" 2>&1; then
+         --launcher "$LAUNCHER" --resolution "1280x800" --artwork "$ARTWORK_DIR" \
+         > "$INSTALL_DIR/steam-setup.log" 2>&1; then
       STEAM_OK=1
       say "Steam is set up — the game is in your library and in Game Mode"
     else

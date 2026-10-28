@@ -30,7 +30,11 @@ function createGameWindow() {
     width: 1280,
     height: 800,
     fullscreen: true,
-    kiosk: true,
+    // NOT kiosk: kiosk mode makes the window undecorated and always-on-top,
+    // and gamescope (Game Mode's compositor) has been seen to segfault when a
+    // kiosk window maps into it. Plain fullscreen behaves identically for a
+    // game and does not upset the compositor.
+    kiosk: false,
     backgroundColor: '#1a1630',
     autoHideMenuBar: true,
     title: 'PokéBonk Deck',

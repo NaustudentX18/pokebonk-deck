@@ -122,20 +122,22 @@ def main() -> int:
         # The pre-existing game must survive untouched.
         if "0" not in entries:
             failures.append("the existing shortcut was lost")
-        elif entries["0"]["AppName"] != "Kodi":
+        elif entries["0"].get("appname") != "Kodi":
             failures.append("the existing shortcut was modified")
 
         # The new shortcut must be there.
         found = [e for e in entries.values()
-                 if isinstance(e, dict) and e.get("AppName") == "PokéBonk Deck"]
+                 if isinstance(e, dict) and e.get("appname") == "PokéBonk Deck"]
         if not found:
             failures.append("the new shortcut was not added")
         else:
             entry = found[0]
             # The path is stored unquoted: Steam's own URL handler takes a
             # plain path, and passing a pre-quoted one double-quotes it.
-            if entry["Exe"] != str(launcher):
-                failures.append(f"Exe is not the launcher: {entry['Exe']!r}")
+            if entry.get("exe") != str(launcher):
+                failures.append(f"exe is not the launcher: {entry.get('exe')!r}")
+            if entry.get("AllowOverlay") != 0:
+                failures.append(f"the Steam overlay must be off: {entry.get('AllowOverlay')!r}")
             if entry["LaunchOptions"] != "":
                 failures.append(f"LaunchOptions should be empty: {entry['LaunchOptions']!r}")
             if not isinstance(entry["appid"], int) or entry["appid"] < 0x80000000:

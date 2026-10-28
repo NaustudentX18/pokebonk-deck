@@ -166,22 +166,30 @@ def write_bin_vdf(root: dict) -> bytes:
 def shortcut_entry(exe: str, app_name: str, appid: int, start_dir: str,
                     icon: str, launch_options: str) -> dict:
     """A shortcut entry with the key set Valve's writer uses."""
+    # Valve's own key names. 'appname' and 'exe' are lower case in the files
+    # the Steam client writes; matching them exactly keeps our entries
+    # indistinguishable from the client's.
     return {
         "appid": appid,
-        "AppName": app_name,
-        "Exe": exe,
+        "appname": app_name,
+        "exe": exe,
         "StartDir": start_dir,
         "icon": icon,
         "ShortcutPath": "",
         "LaunchOptions": launch_options,
         "IsHidden": 0,
         "AllowDesktopConfig": 1,
-        "AllowOverlay": 1,
+        # The Steam overlay injects gameoverlayrenderer.so into the app. On
+        # Electron 45 that renderer segfaults and takes the app with it, which
+        # is what a Deck user sees as "the game never starts".
+        "AllowOverlay": 0,
         "OpenVR": 0,
         "Devkit": 0,
         "DevkitGameID": "",
+        "DevkitOverrideAppID": 0,
         "LastPlayTime": int(time.time()),
         "FlatpakAppID": "",
+        "sortas": "",
         "tags": {"0": "favorite"},
     }
 
@@ -370,6 +378,46 @@ def write_steam_input_config(root: Path, account_id: str, title: str,
 
 
 # --------------------------------------------------------------------------- #
+# Steam capsule artwork
+# --------------------------------------------------------------------------- #
+
+# Steam reads the library art for a non-Steam shortcut from
+# <steam>/app/<appid>/. Without these files the entry is a blank tile.
+ARTWORK_FILES = (
+    "library_hero.jpg",
+    "library_capsule.jpg",
+    "capsule.jpg",
+    "capsulev5.jpg",
+    "header.jpg",
+    "logo.png",
+    "icon.jpg",
+    "purchased.jpg",
+)
+
+
+def install_artwork(root: Path, appid: int, artwork_dir: Path) -> int:
+    """Copy the capsule art into the app folder. Returns the count installed."""
+    if not artwork_dir.is_dir():
+        return 0
+    target = root / "app" / str(appid)
+    try:
+        target.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        return 0
+    installed = 0
+    for name in ARTWORK_FILES:
+        source = artwork_dir / name
+        if not source.is_file():
+            continue
+        try:
+            shutil.copy2(source, target / name)
+            installed += 1
+        except OSError:
+            pass
+    return installed
+
+
+# --------------------------------------------------------------------------- #
 # Steam discovery
 # --------------------------------------------------------------------------- #
 
@@ -406,15 +454,22 @@ def find_steam_binary(root: Path) -> str | None:
 # --------------------------------------------------------------------------- #
 
 def shortcut_has_exe(shortcuts: Path, exe: str) -> bool:
+    """True if the file already holds a shortcut for this command.
+
+    The Steam client stores the exe quoted ("/path/to/thing") while a
+    hand-written entry is usually unquoted, so both forms have to be looked
+    for — otherwise the tool adds a second shortcut for the same app.
+    """
     try:
         data = shortcuts.read_bytes()
     except OSError:
         return False
-    return exe.encode("utf-8") + b"\0" in data
+    quoted = '"' + exe + '"'
+    return exe.encode("utf-8") + b"\0" in data or quoted.encode("utf-8") + b"\0" in data
 
 
-def find_entry_appid(shortcuts: Path, command: str) -> int | None:
-    """Return the appid of the shortcut whose Exe matches, if any."""
+def find_entry(shortcuts: Path, command: str):
+    """Return (appid, appname) of the shortcut for this command, if any."""
     try:
         parsed = read_bin_vdf(shortcuts.read_bytes())
     except (OSError, BinVdfError):
@@ -423,11 +478,19 @@ def find_entry_appid(shortcuts: Path, command: str) -> int | None:
     if not isinstance(entries, dict):
         return None
     for entry in entries.values():
-        if isinstance(entry, dict) and entry.get("Exe") == command:
+        if not isinstance(entry, dict):
+            continue
+        exe = entry.get("exe") or entry.get("Exe") or ""
+        if exe == command or exe.strip('"') == command:
             appid = entry.get("appid")
-            if isinstance(appid, int):
-                return appid
+            name = entry.get("appname") or entry.get("AppName") or ""
+            return (appid if isinstance(appid, int) else None, name)
     return None
+
+
+def find_entry_appid(shortcuts: Path, command: str) -> int | None:
+    found = find_entry(shortcuts, command)
+    return found[0] if found else None
 
 
 def add_via_steam_client(steam_bin: str, exe: str) -> bool:
@@ -509,6 +572,8 @@ def main(argv=None) -> int:
     parser.add_argument("--icon", default="")
     parser.add_argument("--launcher", default="",
                         help="wrapper script to launch (the AppImage path is passed to it)")
+    parser.add_argument("--artwork", default="",
+                        help="directory with the Steam capsule images")
     parser.add_argument("--input-template", default="controller_neptune_gamepad+mouse.vdf",
                         help="Steam Input layout template to use for this title")
     parser.add_argument("--no-steam-input", action="store_true",
@@ -609,10 +674,29 @@ def main(argv=None) -> int:
         except (OSError, ValueError) as error:
             print(f"  ! could not patch localconfig.vdf: {error}", file=sys.stderr)
 
+    # The Steam Input configset is keyed by the title as the CLIENT stored it.
+    # When the client creates the shortcut itself, that title is the exe's
+    # file name, not the name we asked for — using the wrong key means the
+    # per-title layout is silently ignored and Steam falls back to the
+    # Desktop Layout.
+    real_name = args.name
+    found = find_entry(shortcuts, command)
+    if found and found[1]:
+        real_name = found[1]
+        print(f"Shortcut title in Steam: {real_name!r}")
+
+    # The capsule art, so the library entry is not a blank tile.
+    if args.artwork:
+        installed = install_artwork(root, int(appid) & 0xFFFFFFFF, Path(args.artwork))
+        if installed:
+            print(f"Installed {installed} capsule image(s) for appid {appid}")
+        else:
+            print("  ! no capsule artwork was installed")
+
     # Per-title Steam Input: a gamepad layout instead of the Desktop Layout.
     account_id = profile.name
     try:
-        if write_steam_input_config(root, account_id, args.name, args.input_template):
+        if write_steam_input_config(root, account_id, real_name, args.input_template):
             print(f"Steam Input: using the {args.input_template} layout for this title")
         else:
             print("  ! the Steam Input gamepad template was not found — "

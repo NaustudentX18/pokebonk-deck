@@ -43,8 +43,8 @@ def _build_reference_shortcuts_vdf(entries: list[dict]) -> bytes:
     for index, entry in enumerate(entries):
         out += b"\x00" + str(index).encode() + b"\x00"
         out += _kv_int("appid", entry["appid"])
-        out += _kv_str("AppName", entry["AppName"])
-        out += _kv_str("Exe", entry["Exe"])
+        out += _kv_str("appname", entry["appname"])
+        out += _kv_str("exe", entry["exe"])
         out += _kv_str("StartDir", entry["StartDir"])
         out += _kv_str("icon", entry["icon"])
         out += _kv_str("ShortcutPath", entry["ShortcutPath"])
@@ -83,7 +83,7 @@ class BinaryVdfTest(unittest.TestCase):
 
         parsed = read_bin_vdf(original)
         self.assertIn("shortcuts", parsed)
-        self.assertEqual(parsed["shortcuts"]["0"]["AppName"], "PokéBonk Deck")
+        self.assertEqual(parsed["shortcuts"]["0"]["appname"], "PokéBonk Deck")
         self.assertEqual(parsed["shortcuts"]["0"]["appid"], 2443196458)
         self.assertEqual(parsed["shortcuts"]["0"]["tags"]["0"], "favorite")
 
@@ -101,7 +101,7 @@ class BinaryVdfTest(unittest.TestCase):
         )
         original = _build_reference_shortcuts_vdf([entry])
         parsed = read_bin_vdf(original)
-        self.assertEqual(parsed["shortcuts"]["0"]["Exe"], entry["Exe"])
+        self.assertEqual(parsed["shortcuts"]["0"]["exe"], entry["exe"])
         self.assertEqual(write_bin_vdf(parsed), original)
 
     def test_garbage_is_rejected_rather_than_rewritten(self):
