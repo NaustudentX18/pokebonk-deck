@@ -504,9 +504,10 @@ def main(argv=None) -> int:
 
     root = find_steam_root()
     if root is None:
+        # Non-zero: the caller must not report success when nothing was set up.
         print("Steam was not found in the usual locations — skipping the Steam integration.")
         print("Add the AppImage to Steam manually: Library -> Add a Non-Steam Game.")
-        return 0
+        return 1
 
     print(f"Steam root: {root}")
     userdata = userdata_dirs(root)

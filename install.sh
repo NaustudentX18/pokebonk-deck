@@ -149,9 +149,10 @@ if command -v python3 >/dev/null; then
          --launcher "$LAUNCHER" --resolution "1280x800" > "$INSTALL_DIR/steam-setup.log" 2>&1; then
       say "Steam is set up — the game is in your library and in Game Mode"
     else
-      warn "the Steam integration could not complete (see $INSTALL_DIR/steam-setup.log)"
+      warn "Steam was not set up (details: $INSTALL_DIR/steam-setup.log)"
       warn "add it by hand: Library -> Add a Non-Steam Game -> $APPIMAGE"
     fi
+    sed 's/^/    /' "$INSTALL_DIR/steam-setup.log" 2>/dev/null || true
   else
     warn "could not fetch the Steam integration helper"
   fi
