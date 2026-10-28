@@ -106,12 +106,22 @@ echo "  Copy everything above back to the agent — especially section 4."
 # --- report back automatically ------------------------------------------------
 # If a collector is reachable, send the whole report there so nobody has to
 # copy and paste it.
-REPORT_URL="${POKEBONK_REPORT_URL:-http://192.168.4.220:8100/report}"
-if command -v curl >/dev/null && [ -n "$REPORT_URL" ]; then
-  sleep 0.3
-  if curl -fsS --max-time 10 -X POST --data-binary @"$REPORT_FILE" "$REPORT_URL" >/dev/null 2>&1; then
-    echo "  report sent to $REPORT_URL"
-  else
-    echo "  (could not reach $REPORT_URL — copy this output instead)"
+TARGETS=()
+[ -n "${POKEBONK_REPORT_URL:-}" ] && TARGETS+=("$POKEBONK_REPORT_URL")
+TARGETS+=("http://100.105.91.3:8100/report" "http://192.168.4.220:8100/report")
+
+SENT=0
+for url in "${TARGETS[@]}"; do
+  if command -v curl >/dev/null; then
+    sleep 0.2
+    if curl -fsS --max-time 4 -X POST --data-binary @"$REPORT_FILE" "$url" >/dev/null 2>&1; then
+      echo "  report sent to $url"
+      SENT=1
+      break
+    fi
   fi
+done
+
+if [ "$SENT" = "0" ]; then
+  echo "  (could not reach report collector — copy this output instead)"
 fi

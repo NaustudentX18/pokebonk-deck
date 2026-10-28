@@ -44,7 +44,10 @@ li {
   gap: 18px;
 }
 
-li:hover { background: rgba(139, 108, 240, .2); }
+li:hover, li:focus, li.selected {
+  background: rgba(139, 108, 240, .25);
+  outline: none;
+}
 
 kbd {
   color: var(--muted);

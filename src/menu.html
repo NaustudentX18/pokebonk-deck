@@ -21,19 +21,51 @@
     ]
 
     const list = document.getElementById('items')
-    for (const item of ITEMS) {
+    let selectedIndex = 0
+    const listItems = []
+
+    for (let i = 0; i < ITEMS.length; i++) {
+      const item = ITEMS[i]
       const li = document.createElement('li')
+      li.tabIndex = 0
       const label = document.createElement('span')
       label.textContent = item.label
       const kbd = document.createElement('kbd')
       kbd.textContent = item.shortcut
       li.append(label, kbd)
       li.addEventListener('click', () => console.log('deck-command:' + item.id))
+      li.addEventListener('mouseenter', () => setFocus(i))
       list.append(li)
+      listItems.push(li)
     }
 
+    function setFocus(idx) {
+      selectedIndex = (idx + ITEMS.length) % ITEMS.length
+      listItems.forEach((li, i) => {
+        if (i === selectedIndex) {
+          li.classList.add('selected')
+          li.focus()
+        } else {
+          li.classList.remove('selected')
+        }
+      })
+    }
+
+    setFocus(0)
+
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') console.log('deck-command:resume')
+      if (e.key === 'Escape') {
+        console.log('deck-command:resume')
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setFocus(selectedIndex + 1)
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setFocus(selectedIndex - 1)
+      } else if (e.key === 'Enter') {
+        e.preventDefault()
+        console.log('deck-command:' + ITEMS[selectedIndex].id)
+      }
     })
   </script>
 </body>

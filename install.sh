@@ -181,7 +181,7 @@ The client checks pokebonk.com for new game builds on launch and reloads itself
 when the upstream game updates.
 
 To uninstall:
-  rm -rf "$INSTALL_DIR" "$DESKTOP_FILE"
+  rm -rf "$INSTALL_DIR" "$DESKTOP_FILE" "$ICON_DIR/$BIN_NAME.png"
 EOF
 
 if [ "$STEAM_OK" = "1" ]; then

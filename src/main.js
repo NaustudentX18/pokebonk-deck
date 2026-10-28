@@ -51,6 +51,10 @@ const SOFTWARE_FLAG = 'softwareRendering'
 
 function useSoftwareRendering() {
   try {
+    if (process.argv.includes('--force-gpu') || process.argv.includes('--reset-gpu')) {
+      writeState({ [SOFTWARE_FLAG]: false })
+      return false
+    }
     return Boolean(readState()[SOFTWARE_FLAG])
   } catch {
     return false
@@ -298,6 +302,18 @@ app.whenReady().then(() => {
 
   win.webContents.on('did-finish-load', () => {
     void updates.checkNow()
+  })
+
+  // Auto-retry initial load when waking from sleep or connecting to WiFi
+  win.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
+    if ([-106, -105, -21, -2].includes(errorCode)) {
+      log(`network not ready (${errorCode}: ${errorDescription}) — retrying in 4s…`)
+      setTimeout(() => {
+        if (!win.isDestroyed()) {
+          win.loadURL(validatedURL || 'https://pokebonk.com/').catch(() => {})
+        }
+      }, 4000)
+    }
   })
   updates.start(30 * 60 * 1000)
 
