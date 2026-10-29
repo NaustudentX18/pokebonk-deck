@@ -93,6 +93,18 @@ function shouldRollBack({ webgl2, tried = false } = {}) {
   return tried && webgl2 === false
 }
 
+/**
+ * Software rendering is for this process only.
+ *
+ * An older build stored softwareRendering:true after one GPU death, and every
+ * later launch honored it. A stored flag is ignored. Only --software-rendering
+ * on this process takes that path. --force-gpu never does.
+ */
+function shouldUseSoftwareRendering({ argv = [] } = {}) {
+  if (argv.includes('--force-gpu') || argv.includes('--reset-gpu')) return false
+  return argv.includes('--software-rendering')
+}
+
 module.exports = {
   SOFTWARE_RENDERER,
   HARDWARE_GPU_FLAGS,
@@ -101,5 +113,6 @@ module.exports = {
   shouldRollBack,
   missingHardwareFlags,
   shouldRelaunchForGpu,
-  gpuRelaunchArgs
+  gpuRelaunchArgs,
+  shouldUseSoftwareRendering
 }

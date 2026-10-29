@@ -10,7 +10,7 @@ const { createUpdateService } = require('./update-service')
 const { startGamepadWatcher } = require('./gamepad-watcher')
 const { openMenu } = require('./menu')
 const { summariseUpdaterState } = require('./shell-updater')
-const { HARDWARE_GPU_FLAGS, isSoftwareRenderer, shouldEscalate, shouldRollBack, shouldRelaunchForGpu, gpuRelaunchArgs } = require('./gpu-mode')
+const { HARDWARE_GPU_FLAGS, isSoftwareRenderer, shouldEscalate, shouldRollBack, shouldRelaunchForGpu, gpuRelaunchArgs, shouldUseSoftwareRendering } = require('./gpu-mode')
 
 const log = (...args) => console.log('[deck]', ...args)
 
@@ -43,29 +43,21 @@ const setLastBuild = (build) => writeState({ lastBuild: build })
 /* ------------------------------------------------------------------ *
  * GPU fallback
  * ------------------------------------------------------------------ *
- * Chromium aborts the whole app when the GPU process cannot start (a VM, a
- * remote desktop, a missing /dev/dri). The game still runs on software
- * rendering, so fall back to that once and remember the choice.
+ * A GPU-process death relaunches this run with --software-rendering.
+ * That choice is not stored. A flag left by an older build is cleared,
+ * or every later launch stays on SwiftShader.
  */
 
 const SOFTWARE_FLAG = 'softwareRendering'
 const GPU_FLAGS_TRIED = 'gpuFlagsTried'
 
 function useSoftwareRendering() {
-  try {
-    if (process.argv.includes('--force-gpu') || process.argv.includes('--reset-gpu')) {
-      // Clear a previously persisted fallback: the GPU works, so use it.
-      writeState({ [SOFTWARE_FLAG]: false })
-      return false
-    }
-    // A relaunch after a GPU death asks for software rendering for THIS run
-    // only. Persisting it would leave the game crawling on SwiftShader for
-    // ever, which looks exactly like "it never finishes loading".
-    if (process.argv.includes('--software-rendering')) return true
-    return Boolean(readState()[SOFTWARE_FLAG])
-  } catch {
-    return false
+  const software = shouldUseSoftwareRendering({ argv: process.argv })
+  if (!software && readState()[SOFTWARE_FLAG]) {
+    writeState({ [SOFTWARE_FLAG]: false })
+    log('cleared a stuck software-rendering flag from an older build')
   }
+  return software
 }
 
 // Must be applied before the app becomes ready. Electron's own API is what
@@ -76,7 +68,7 @@ if (useSoftwareRendering()) {
   app.commandLine.appendSwitch('use-gl', 'angle')
   app.commandLine.appendSwitch('use-angle', 'swiftshader')
   app.commandLine.appendSwitch('enable-unsafe-swiftshader')
-  log('software rendering enabled (persisted from a previous GPU failure)')
+  log('software rendering for this run only')
 } else if (shouldRelaunchForGpu({ failed: Boolean(readState().gpuFlagsFailed) })) {
   // Command-line flags, not appendSwitch: appendSwitch crashes the GPU
   // process (exit 139) and the fallback then forces software rendering.

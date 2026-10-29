@@ -35,15 +35,14 @@ parsed and rewritten only if it is fully understood, and both are backed up.
 ## Steam Deck (SteamOS 3)
 
 1. Either run the installer above, or open the
-   [releases page](https://github.com/NaustudentX18/pokebonk-deck/releases) on the Deck's
-   browser (or copy the file over via microSD, USB or SSH) and download
-   `PokebonkDeck-1.1.0-x86_64.AppImage`.
+   [latest release](https://github.com/NaustudentX18/pokebonk-deck/releases/latest) and download
+   the `PokebonkDeck-*-x86_64.AppImage`.
 2. In Desktop Mode, open a terminal and make it executable:
 
    ```bash
-   chmod +x ~/Downloads/PokebonkDeck-1.1.0-x86_64.AppImage
+   chmod +x ~/Downloads/PokebonkDeck-*-x86_64.AppImage
    mkdir -p ~/.local/share/pokebonk-deck
-   mv ~/Downloads/PokebonkDeck-1.1.0-x86_64.AppImage ~/.local/share/pokebonk-deck/
+   mv ~/Downloads/PokebonkDeck-*-x86_64.AppImage ~/.local/share/pokebonk-deck/pokebonk-deck.AppImage
    ```
 
 3. In Steam, go to **Library → Add a Non-Steam Game → Browse**, and pick the AppImage.

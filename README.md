@@ -19,8 +19,8 @@ An unofficial native Linux client for [PokéBonk](https://pokebonk.com) — the 
 Fullscreen on launch. Controller-native. Saves that persist. Game updates that arrive on their
 own. One AppImage, no install, no root.
 
-> **Status: v1.1.0 Released & Hardware Verified.** Tested and proven on Steam Deck (SteamOS 3.6+ OLED & LCD).
-> Single-command installer handles Steam library shortcuts, Gamepad input mapping, and Gamemode wrappers automatically.
+> **Status:** current release on [GitHub](https://github.com/NaustudentX18/pokebonk-deck/releases/latest).
+> The launcher asks Chromium for the GPU on every start. Measured on a Steam Deck OLED: `ANGLE (AMD, AMD Custom GPU 0932 (radeonsi vangogh ACO), OpenGL 4.6)`, WebGL2 on, not a software rasteriser.
 > Landing page & install guide: **[https://naustudentx18.github.io/pokebonk-deck/](https://naustudentx18.github.io/pokebonk-deck/)**
 
 </div>
@@ -86,15 +86,14 @@ What it sets up on the Deck:
 <details>
 <summary>Manual install</summary>
 
-1. Download `PokebonkDeck-1.1.0-x86_64.AppImage` from the [releases page](https://github.com/NaustudentX18/pokebonk-deck/releases).
-2. Make it executable:
+1. Download the latest `PokebonkDeck-*-x86_64.AppImage` from the [releases page](https://github.com/NaustudentX18/pokebonk-deck/releases/latest).
+2. Make it executable and put it where the installer would:
    ```bash
-   chmod +x ~/Downloads/PokebonkDeck-1.1.0-x86_64.AppImage
    mkdir -p ~/.local/share/pokebonk-deck
-   mv ~/Downloads/PokebonkDeck-1.1.0-x86_64.AppImage ~/.local/share/pokebonk-deck/
+   chmod +x ~/Downloads/PokebonkDeck-*-x86_64.AppImage
+   mv ~/Downloads/PokebonkDeck-*-x86_64.AppImage ~/.local/share/pokebonk-deck/pokebonk-deck.AppImage
    ```
-3. In Steam: **Library → Add a Non-Steam Game** → browse to the AppImage. Set the launch
-   option to `gamemoderun %command%`.
+3. Prefer the installer. It also writes the launcher that passes the GPU flags. A bare AppImage does not.
 
 > Keep the AppImage on internal storage. The self-updater replaces the file in place, and a
 > rename across filesystems (e.g. FAT32 on the microSD card) fails.
@@ -127,7 +126,7 @@ It removes:
 | | |
 |---|---|
 | the installed app | `~/.local/share/pokebonk-deck/` — the AppImage, the launcher, the artwork, the logs |
-| the client's state and cache | `~/.config/pokebonk-deck/`, `~/.cache/pokebonk-deck/` |
+| the client's state and cache | `~/.config/PokéBonk Deck/` (and `~/.config/pokebonk-deck/` from older builds), plus the matching cache dirs |
 | the launcher entry and the icon | the `.desktop` file and the hicolor icons |
 | any copy you downloaded by hand | `PokebonkDeck-*.AppImage` in Downloads, Desktop or your home |
 | the Steam shortcut | the entry for it in `shortcuts.vdf` |

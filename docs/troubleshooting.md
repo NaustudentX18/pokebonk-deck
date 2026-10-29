@@ -102,7 +102,7 @@ fullscreen manually. On Wayland, some window managers intercept fullscreen reque
 ## Reset everything
 
 ```bash
-rm -rf ~/.config/pokebonk-deck ~/.local/share/pokebonk-deck
+curl -fsSL https://github.com/NaustudentX18/pokebonk-deck/releases/latest/download/uninstall.sh | bash
 ```
 
 That removes the persistent profile — including the local guest session. Cloud saves tied to

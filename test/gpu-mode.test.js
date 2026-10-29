@@ -74,6 +74,13 @@ test('a launch without the flags relaunches, a scripted launch does not', () => 
   assert.deepEqual(gpuRelaunchArgs(['electron', '.', '--selftest']), ['.', '--selftest', ...flags])
 })
 
+test('a stored software-rendering flag does not stick', () => {
+  const { shouldUseSoftwareRendering } = require('../src/gpu-mode')
+  assert.equal(shouldUseSoftwareRendering({ argv: ['app', '--software-rendering'] }), true)
+  assert.equal(shouldUseSoftwareRendering({ argv: ['app'] }), false)
+  assert.equal(shouldUseSoftwareRendering({ argv: ['app', '--force-gpu'] }), false)
+  assert.equal(shouldUseSoftwareRendering({ argv: ['app', '--software-rendering', '--force-gpu'] }), false)
+})
 test('a lost WebGL context rolls the escalation back', () => {
   const { shouldRollBack } = require('../src/gpu-mode')
   assert.equal(shouldRollBack({ webgl2: false, tried: true }), true)
