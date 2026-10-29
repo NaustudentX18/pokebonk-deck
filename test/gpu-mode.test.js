@@ -53,6 +53,8 @@ test('a hardware renderer never escalates', () => {
 test('the escalation flags ask for the real GPU', () => {
   assert.ok(HARDWARE_GPU_FLAGS.includes('--ignore-gpu-blocklist'))
   assert.ok(HARDWARE_GPU_FLAGS.includes('--ozone-platform=x11'))
+  assert.ok(HARDWARE_GPU_FLAGS.includes('--disable-gpu-sandbox'))
+  assert.ok(HARDWARE_GPU_FLAGS.includes('--use-angle=gl'))
 })
 
 test('the escalation flags keep WebGL2 alive', () => {
@@ -60,6 +62,16 @@ test('the escalation flags keep WebGL2 alive', () => {
   assert.equal(HARDWARE_GPU_FLAGS.includes('--use-gl=desktop'), false)
   assert.ok(HARDWARE_GPU_FLAGS.includes('--ignore-gpu-blocklist'))
   assert.ok(HARDWARE_GPU_FLAGS.includes('--ozone-platform=x11'))
+})
+
+test('a launch without the flags relaunches, a scripted launch does not', () => {
+  const { shouldRelaunchForGpu, gpuRelaunchArgs, HARDWARE_GPU_FLAGS: flags } = require('../src/gpu-mode')
+  assert.equal(shouldRelaunchForGpu({ argv: ['electron', '.'] }), true)
+  assert.equal(shouldRelaunchForGpu({ argv: ['app', ...flags] }), false)
+  assert.equal(shouldRelaunchForGpu({ argv: ['app'], failed: true }), false)
+  assert.equal(shouldRelaunchForGpu({ argv: ['app', '--no-gpu-flags'] }), false)
+  assert.equal(shouldRelaunchForGpu({ argv: ['app', '--software-rendering'] }), false)
+  assert.deepEqual(gpuRelaunchArgs(['electron', '.', '--selftest']), ['.', '--selftest', ...flags])
 })
 
 test('a lost WebGL context rolls the escalation back', () => {

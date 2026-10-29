@@ -10,7 +10,7 @@ const { createUpdateService } = require('./update-service')
 const { startGamepadWatcher } = require('./gamepad-watcher')
 const { openMenu } = require('./menu')
 const { summariseUpdaterState } = require('./shell-updater')
-const { HARDWARE_GPU_FLAGS, isSoftwareRenderer, shouldEscalate, shouldRollBack } = require('./gpu-mode')
+const { HARDWARE_GPU_FLAGS, isSoftwareRenderer, shouldEscalate, shouldRollBack, shouldRelaunchForGpu, gpuRelaunchArgs } = require('./gpu-mode')
 
 const log = (...args) => console.log('[deck]', ...args)
 
@@ -49,6 +49,7 @@ const setLastBuild = (build) => writeState({ lastBuild: build })
  */
 
 const SOFTWARE_FLAG = 'softwareRendering'
+const GPU_FLAGS_TRIED = 'gpuFlagsTried'
 
 function useSoftwareRendering() {
   try {
@@ -76,6 +77,14 @@ if (useSoftwareRendering()) {
   app.commandLine.appendSwitch('use-angle', 'swiftshader')
   app.commandLine.appendSwitch('enable-unsafe-swiftshader')
   log('software rendering enabled (persisted from a previous GPU failure)')
+} else if (shouldRelaunchForGpu({ failed: Boolean(readState().gpuFlagsFailed) })) {
+  // Command-line flags, not appendSwitch: appendSwitch crashes the GPU
+  // process (exit 139) and the fallback then forces software rendering.
+  const args = gpuRelaunchArgs()
+  log('relaunching with Chromium hardware-acceleration flags:', HARDWARE_GPU_FLAGS.join(' '))
+  writeState({ [GPU_FLAGS_TRIED]: true })
+  app.relaunch({ args })
+  app.exit(0)
 }
 
 app.on('child-process-gone', (_event, details) => {
@@ -237,7 +246,7 @@ function startShellUpdater(win) {
  * itself once with the flags that ask for the real GPU.
  */
 
-const GPU_FLAGS_TRIED = 'gpuFlagsTried'
+
 
 function hasWebgl2(win) {
   return win.webContents

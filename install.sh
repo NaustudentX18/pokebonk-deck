@@ -137,21 +137,21 @@ fi
 LOG="$INSTALL_DIR/launch.log"
 [ -w "\$(dirname "\$LOG")" ] || LOG="\${TMPDIR:-/tmp}/pokebonk-deck-launch.log"
 
-# Extra Chromium flags, if the user wants them:
-#   POKEBONK_GPU_FLAGS="--ignore-gpu-blocklist --ozone-platform=x11"
-# The client also escalates on its own when it finds a software renderer, so
-# this is only for overriding that behaviour.
-if [ -n "\${POKEBONK_GPU_FLAGS:-}" ]; then
-  if command -v gamemoderun >/dev/null 2>&1; then
-    exec gamemoderun "\$APP" \$POKEBONK_GPU_FLAGS "\$@" 2>&1 | tee -a "\$LOG"
-  fi
-  exec "\$APP" \$POKEBONK_GPU_FLAGS "\$@" 2>&1 | tee -a "\$LOG"
+# Chromium hardware acceleration. Written into the launcher so every Game
+# Mode start asks for the GPU before the first frame. Override with
+# POKEBONK_GPU_FLAGS, or set POKEBONK_GPU_FLAGS=none to launch without them.
+# --use-gl=desktop is not here: measured, it turns WebGL2 off entirely.
+GPU_FLAGS="\${POKEBONK_GPU_FLAGS:---ignore-gpu-blocklist --ozone-platform=x11 --disable-gpu-sandbox --use-angle=gl}"
+if [ "\$GPU_FLAGS" = "none" ]; then
+  GPU_FLAGS=""
 fi
 
 if command -v gamemoderun >/dev/null 2>&1; then
-  exec gamemoderun "\$APP" "\$@" 2>&1 | tee -a "\$LOG"
+  # shellcheck disable=SC2086
+  exec gamemoderun "\$APP" \$GPU_FLAGS "\$@" 2>&1 | tee -a "\$LOG"
 fi
-exec "\$APP" "\$@" 2>&1 | tee -a "\$LOG"
+# shellcheck disable=SC2086
+exec "\$APP" \$GPU_FLAGS "\$@" 2>&1 | tee -a "\$LOG"
 EOF
 chmod +x "$LAUNCHER"
 say "wrote $LAUNCHER"
@@ -276,6 +276,7 @@ if [ "$STEAM_OK" = "1" ]; then
 In Steam: it is in your library as "PokéBonk Deck" — start it from Game Mode
 with the Deck's controller. Steam Input is set to the gamepad layout, the
 resolution is pinned to 1280x800, and the launch goes through a wrapper that
-uses gamemode when it is available.
+uses gamemode when it is available. The wrapper also passes Chromium's
+hardware-acceleration flags, so the game is not left on a software rasteriser.
 EOF
 fi
