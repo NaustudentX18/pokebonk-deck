@@ -10,6 +10,7 @@ const { createUpdateService } = require('./update-service')
 const { startGamepadWatcher } = require('./gamepad-watcher')
 const { openMenu } = require('./menu')
 const { summariseUpdaterState } = require('./shell-updater')
+const { HARDWARE_GPU_FLAGS, isSoftwareRenderer, shouldEscalate, shouldRollBack } = require('./gpu-mode')
 
 const log = (...args) => console.log('[deck]', ...args)
 
@@ -226,6 +227,72 @@ function startShellUpdater(win) {
 }
 
 /* ------------------------------------------------------------------ *
+ * Hardware acceleration
+ * ------------------------------------------------------------------ *
+ * The game warns "Your browser is not using your graphics card" when the
+ * WebGL renderer is a software rasteriser. That happens on the Deck when
+ * Chromium cannot get the GPU — usually inside gamescope. Rather than
+ * forcing flags on every launch, the client reacts: it reads the renderer
+ * the game is actually running on, and if it is a software one, relaunches
+ * itself once with the flags that ask for the real GPU.
+ */
+
+const GPU_FLAGS_TRIED = 'gpuFlagsTried'
+
+function hasWebgl2(win) {
+  return win.webContents
+    .executeJavaScript(`(() => {
+      const canvas = document.querySelector('canvas')
+      return !!(canvas && canvas.getContext('webgl2'))
+    })()`)
+    .catch(() => null)
+}
+
+function readRenderer(win) {
+  return win.webContents
+    .executeJavaScript(`(() => {
+      const canvas = document.querySelector('canvas')
+      const gl = canvas && (canvas.getContext('webgl2') || canvas.getContext('webgl'))
+      if (!gl) return null
+      const dbg = gl.getExtension('WEBGL_debug_renderer_info')
+      return String(dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER) || '')
+    })()`)
+    .catch(() => null)
+}
+
+async function escalateToHardwareGpu(win) {
+  // Give the game a moment to build its canvas before judging the renderer.
+  await new Promise((r) => setTimeout(r, 8000))
+
+  const renderer = await readRenderer(win)
+  const webgl2 = await hasWebgl2(win)
+  const state = readState()
+  const tried = Boolean(state[GPU_FLAGS_TRIED])
+
+  // The flags are applied but WebGL is now GONE: they did more harm than
+  // good. Go back to the plain launch rather than sit there with no renderer.
+  if (shouldRollBack({ webgl2, tried })) {
+    log('the GPU flags cost us WebGL — rolling back')
+    writeState({ [GPU_FLAGS_TRIED]: false, gpuFlagsFailed: true })
+    app.relaunch([])
+    app.exit(0)
+  }
+
+  if (!shouldEscalate({ renderer, tried })) {
+    if (isSoftwareRenderer(renderer)) {
+      log('still on a software renderer after asking for the GPU:', renderer)
+    }
+    return
+  }
+
+  log('the game is running on a software renderer:', renderer)
+  log('relaunching with', HARDWARE_GPU_FLAGS.join(' '))
+  writeState({ [GPU_FLAGS_TRIED]: true })
+  app.relaunch([...HARDWARE_GPU_FLAGS])
+  app.exit(0)
+}
+
+/* ------------------------------------------------------------------ *
  * Boot
  * ------------------------------------------------------------------ */
 
@@ -304,6 +371,8 @@ async function runSelfTest() {
     }
   }
 
+  out.checks.userData = app.getPath('userData')
+  out.checks.appName = app.getName()
   out.checks.electron = process.versions.electron
   out.checks.chrome = process.versions.chrome
   out.checks.upstream = await probeVersion()
@@ -320,6 +389,7 @@ app.whenReady().then(() => {
 
   const win = createGameWindow()
   registerShortcuts(win)
+  let escalationStarted = false
 
   const updates = createUpdateService({
     probe: () => probeVersion(),
@@ -333,6 +403,10 @@ app.whenReady().then(() => {
 
   win.webContents.on('did-finish-load', () => {
     void updates.checkNow()
+    if (!escalationStarted) {
+      escalationStarted = true
+      void escalateToHardwareGpu(win)
+    }
   })
 
   // Auto-retry initial load when waking from sleep or connecting to WiFi

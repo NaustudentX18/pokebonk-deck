@@ -150,8 +150,17 @@ MARKERS = ("pokebonk-deck", "pokebonk deck", "pokebonk_deck", "pokebonkdeck")
 
 HOME = pathlib.Path.home()
 INSTALL_DIR = HOME / ".local/share/pokebonk-deck"
-STATE_DIR = HOME / ".config/pokebonk-deck"
-CACHE_DIR = HOME / ".cache/pokebonk-deck"
+# The app's userData directory is named after the PRODUCT name, which is
+# "PokéBonk Deck" — not after the package name. Both are removed, and so is
+# the Electron cache beside it.
+STATE_DIRS = [
+    HOME / ".config/pokebonk-deck",
+    HOME / ".config/PokéBonk Deck",
+]
+CACHE_DIRS = [
+    HOME / ".cache/pokebonk-deck",
+    HOME / ".cache/PokéBonk Deck",
+]
 DESKTOP_FILE = HOME / ".local/share/applications/gg.pokebonk.deck.desktop"
 ICON_DIRS = [
     HOME / ".local/share/icons/hicolor/512x512/apps",
@@ -409,8 +418,10 @@ def clean_steam_backups(root: pathlib.Path, report: Report) -> None:
 
 def clean_app_files(report: Report) -> None:
     report.remove("the installed app", INSTALL_DIR)
-    report.remove("the client's state", STATE_DIR)
-    report.remove("the client's cache", CACHE_DIR)
+    for state_dir in STATE_DIRS:
+        report.remove("the client's state", state_dir)
+    for cache_dir in CACHE_DIRS:
+        report.remove("the client's cache", cache_dir)
     report.remove("the launcher entry", DESKTOP_FILE)
     for icon_dir in ICON_DIRS:
         if not icon_dir.is_dir():
@@ -453,7 +464,7 @@ def clean_temp(report: Report) -> None:
 def verify(report: Report) -> list[str]:
     """What is still there? Anything listed here is a leftover."""
     leftovers = []
-    for path in (INSTALL_DIR, STATE_DIR, CACHE_DIR, DESKTOP_FILE):
+    for path in [INSTALL_DIR, *STATE_DIRS, *CACHE_DIRS, DESKTOP_FILE]:
         if path.exists():
             leftovers.append(str(path))
     for root in STEAM_ROOTS:

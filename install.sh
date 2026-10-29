@@ -137,6 +137,17 @@ fi
 LOG="$INSTALL_DIR/launch.log"
 [ -w "\$(dirname "\$LOG")" ] || LOG="\${TMPDIR:-/tmp}/pokebonk-deck-launch.log"
 
+# Extra Chromium flags, if the user wants them:
+#   POKEBONK_GPU_FLAGS="--ignore-gpu-blocklist --ozone-platform=x11"
+# The client also escalates on its own when it finds a software renderer, so
+# this is only for overriding that behaviour.
+if [ -n "\${POKEBONK_GPU_FLAGS:-}" ]; then
+  if command -v gamemoderun >/dev/null 2>&1; then
+    exec gamemoderun "\$APP" \$POKEBONK_GPU_FLAGS "\$@" 2>&1 | tee -a "\$LOG"
+  fi
+  exec "\$APP" \$POKEBONK_GPU_FLAGS "\$@" 2>&1 | tee -a "\$LOG"
+fi
+
 if command -v gamemoderun >/dev/null 2>&1; then
   exec gamemoderun "\$APP" "\$@" 2>&1 | tee -a "\$LOG"
 fi

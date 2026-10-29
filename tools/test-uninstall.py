@@ -80,6 +80,9 @@ def build_machine(home: pathlib.Path) -> pathlib.Path:
 
     (home / ".config/pokebonk-deck").mkdir(parents=True)
     (home / ".config/pokebonk-deck/deck-state.json").write_text("{}")
+    # The real one: Electron names the userData directory after productName.
+    (home / ".config/PokéBonk Deck").mkdir(parents=True)
+    (home / ".config/PokéBonk Deck/deck-state.json").write_text("{}")
     (home / ".cache/pokebonk-deck").mkdir(parents=True)
     (home / ".cache/pokebonk-deck/Cache").write_text("x")
 
@@ -110,8 +113,10 @@ def main() -> int:
 
         uninstall.HOME = home
         uninstall.INSTALL_DIR = home / ".local/share/pokebonk-deck"
-        uninstall.STATE_DIR = home / ".config/pokebonk-deck"
-        uninstall.CACHE_DIR = home / ".cache/pokebonk-deck"
+        uninstall.STATE_DIRS = [home / ".config/pokebonk-deck",
+                               home / ".config/PokéBonk Deck"]
+        uninstall.CACHE_DIRS = [home / ".cache/pokebonk-deck",
+                                home / ".cache/PokéBonk Deck"]
         uninstall.DESKTOP_FILE = home / ".local/share/applications/gg.pokebonk.deck.desktop"
         uninstall.ICON_DIRS = [home / ".local/share/icons/hicolor/512x512/apps"]
         uninstall.STEAM_ROOTS = (steam_root,)
@@ -135,6 +140,7 @@ def main() -> int:
         for path in (
             home / ".local/share/pokebonk-deck",
             home / ".config/pokebonk-deck",
+            home / ".config/PokéBonk Deck",
             home / ".cache/pokebonk-deck",
             home / ".local/share/applications/gg.pokebonk.deck.desktop",
             home / ".local/share/icons/hicolor/512x512/apps/pokebonk-deck.png",
